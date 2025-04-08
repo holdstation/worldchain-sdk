@@ -16,7 +16,7 @@
     "clean": true
   },
   "scripts": {
-    "build": "rimraf dist && tsup",
+    "build": "rimraf dist && tsup --minify",
     "dev": "tsup --watch"
   },
   "keywords": [],
