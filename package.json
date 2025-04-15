@@ -37,5 +37,9 @@
   "peerDependencies": {
     "@worldcoin/minikit-js": "^1.8.0",
     "ethers": "^6.13.5"
+  },
+  "dependencies": {
+    "async-mutex": "^0.5.0",
+    "idb": "^8.0.2"
   }
 }
