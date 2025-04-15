@@ -116,29 +116,43 @@ export class Runner {
       .zeroPadValue(this.walletAddress, 32)
       .toLowerCase();
 
-    for (let i = to; i >= from; i -= 1000) {
+    // our rpc allow upto 2000 block
+    const step = 2000;
+
+    for (let i = to; i >= from; i -= step) {
       if (this.aborted) {
         console.debug("Aborted");
         break;
       }
 
-      const params = {
-        fromBlock: Math.max(i - 1000, from),
-        toBlock: i,
-        address: this.walletAddress,
-        topics: [
-          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-          [topicAddress],
-          [topicAddress],
-        ],
-      };
+      const logs = await Promise.all([
+        // transfer from this address
+        this.provider.getLogs({
+          fromBlock: Math.max(i - step, from),
+          toBlock: i,
+          topics: [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            [topicAddress],
+          ],
+        }),
 
-      console.debug("Query params", params);
+        // transfer to this address
+        this.provider.getLogs({
+          fromBlock: Math.max(i - step, from),
+          toBlock: i,
+          topics: [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            null,
+            [topicAddress],
+          ],
+        }),
+      ]);
 
-      const logs = await this.provider.getLogs(params);
+      const combinedLogs = [...logs[0], ...logs[1]];
 
+      // TODO: add transfer amount here
       const txhash = new Set<string>();
-      for (let log of logs) {
+      for (let log of combinedLogs) {
         txhash.add(log.transactionHash);
       }
 
