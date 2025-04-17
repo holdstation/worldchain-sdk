@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { Runner } from "./manager";
 
 describe("HistoryManager", () => {
   let provider: ethers.JsonRpcProvider;
@@ -7,6 +8,16 @@ describe("HistoryManager", () => {
     provider = new ethers.JsonRpcProvider(
       "https://worldchain-mainnet.g.alchemy.com/public"
     );
+  });
+
+  it("get txs", async () => {
+    const runner = new Runner(
+      "0xd92144D6bF421Aa038f872545AAF07b4328dB279",
+      provider
+    );
+    await runner.run();
+
+    console.log("done roi nhe");
   });
 
   it("manual filter logs", async () => {

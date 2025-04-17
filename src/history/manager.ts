@@ -1,6 +1,13 @@
 import { Mutex } from "async-mutex";
 import { ethers } from "ethers";
 
+type TokenTransfer = {
+  tokenAddress: string;
+  amount: string;
+  from: string;
+  to: string;
+};
+
 export class Manager {
   private listeners: Record<string, Runner> = {};
   private readonly mutex = new Mutex();
@@ -59,6 +66,7 @@ export class Manager {
 export class Runner {
   private lastBlock: number = 0;
   private minBlock: number = 0;
+  private readonly blockstep = 2_000;
   private aborted = false;
 
   // delay between range scan
@@ -117,9 +125,8 @@ export class Runner {
       .toLowerCase();
 
     // our rpc allow upto 2000 block
-    const step = 2000;
 
-    for (let i = to; i >= from; i -= step) {
+    for (let i = to; i >= from; i -= this.blockstep) {
       if (this.aborted) {
         console.debug("Aborted");
         break;
@@ -128,7 +135,7 @@ export class Runner {
       const logs = await Promise.all([
         // transfer from this address
         this.provider.getLogs({
-          fromBlock: Math.max(i - step, from),
+          fromBlock: Math.max(i - this.blockstep, from),
           toBlock: i,
           topics: [
             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
@@ -138,7 +145,7 @@ export class Runner {
 
         // transfer to this address
         this.provider.getLogs({
-          fromBlock: Math.max(i - step, from),
+          fromBlock: Math.max(i - this.blockstep, from),
           toBlock: i,
           topics: [
             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
@@ -148,16 +155,24 @@ export class Runner {
         }),
       ]);
 
+      const txsummary: Record<string, TokenTransfer[]> = {};
       const combinedLogs = [...logs[0], ...logs[1]];
 
-      // TODO: add transfer amount here
-      const txhash = new Set<string>();
       for (let log of combinedLogs) {
-        txhash.add(log.transactionHash);
+        if (!txsummary[log.transactionHash]) {
+          txsummary[log.transactionHash] = [];
+        }
+
+        txsummary[log.transactionHash].push({
+          tokenAddress: log.address,
+          amount: ethers.toBigInt(log.data).toString(),
+          from: log.topics[1],
+          to: log.topics[2],
+        });
       }
 
       const txs = await Promise.all(
-        Array.from(txhash).map(async (tx) => {
+        Array.from(Object.keys(txsummary)).map(async (tx) => {
           const txData = await this.provider.getTransaction(tx);
 
           return txData;
