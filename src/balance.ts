@@ -3,9 +3,9 @@ import { ERC20_ABI } from "./abi/erc20";
 import { MULTICALL3_ABI } from "./abi/multicall3";
 import { config } from "./config";
 
-const erc20Interface = new ethers.Interface(ERC20_ABI);
+export const erc20Interface = new ethers.Interface(ERC20_ABI);
 
-type MulticallRequest = {
+export type MulticallRequest = {
   target: string;
   callData: string;
 };
