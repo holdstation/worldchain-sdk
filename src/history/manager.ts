@@ -99,7 +99,9 @@ export class Runner {
 
   run = async () => {
     this.lastBlock = await this.provider.getBlockNumber();
-    this.minBlock = this.lastBlock;
+    const latestBlock = await this.transactionStorage.findLastBlock();
+    const minBlock = Math.max(latestBlock, this.lastBlock - 100_000); // get first 100_000 block
+    this.minBlock = minBlock;
 
     console.debug("Block", { last: this.lastBlock, min: this.minBlock });
 
@@ -115,17 +117,17 @@ export class Runner {
 
   private async loop() {
     while (!this.aborted) {
-      if (this.minBlock < this.lastBlock - 100_000) {
+      if (this.lastBlock < this.minBlock) {
         console.debug(
           `MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`
         );
         return;
       }
 
-      await this.queryLogs(this.minBlock - 10_000, this.minBlock)
+      await this.queryLogs(this.lastBlock - 10_000, this.lastBlock)
         .then(() => {
           // Update minBlock to avoid duplicated query
-          this.minBlock = this.minBlock - 10_000;
+          this.lastBlock = this.lastBlock - 10_000;
         })
         .catch((e: any) => {
           // This is tricky step to avoid missing data
@@ -144,6 +146,23 @@ export class Runner {
     return methodId;
   }
 
+  private async retry<T>(fn: () => Promise<T>, maxRetries: number): Promise<T> {
+    let attempts = 0;
+    while (attempts < maxRetries) {
+      try {
+        return await fn();
+      } catch (error) {
+        attempts++;
+        console.error(`Attempt ${attempts} failed:`, error);
+        if (attempts >= maxRetries) {
+          console.error(`Failed after ${maxRetries} attempts.`);
+          throw error; // Optionally rethrow the error
+        }
+      }
+    }
+    throw new Error("Retry logic failed unexpectedly."); // Fallback error
+  }
+
   private async queryLogs(from: number, to: number) {
     const topicAddress = ethers
       .zeroPadValue(this.walletAddress, 32)
@@ -157,28 +176,32 @@ export class Runner {
         break;
       }
 
-      const logs = await Promise.all([
-        // transfer from this address
-        this.provider.getLogs({
-          fromBlock: Math.max(i - this.blockstep, from),
-          toBlock: i,
-          topics: [
-            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-            [topicAddress],
-          ],
-        }),
+      const logs = await this.retry(
+        () =>
+          Promise.all([
+            // transfer from this address
+            this.provider.getLogs({
+              fromBlock: Math.max(i - this.blockstep, from),
+              toBlock: i,
+              topics: [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                [topicAddress],
+              ],
+            }),
 
-        // transfer to this address
-        this.provider.getLogs({
-          fromBlock: Math.max(i - this.blockstep, from),
-          toBlock: i,
-          topics: [
-            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-            null,
-            [topicAddress],
-          ],
-        }),
-      ]);
+            // transfer to this address
+            this.provider.getLogs({
+              fromBlock: Math.max(i - this.blockstep, from),
+              toBlock: i,
+              topics: [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                null,
+                [topicAddress],
+              ],
+            }),
+          ]),
+        3
+      );
 
       const txsummary: Record<string, TokenTransfer[]> = {};
       const combinedLogs = [...logs[0], ...logs[1]];
@@ -241,7 +264,11 @@ export class Runner {
       }
 
       // Save transaction to storage
-      await this.transactionStorage.saveMultiple(transactions);
+      try {
+        await this.transactionStorage.saveMultiple(transactions);
+      } catch (error) {
+        console.error("Error saving transaction", error);
+      }
     }
   }
 }

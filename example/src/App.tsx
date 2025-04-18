@@ -23,7 +23,7 @@ function App() {
         setTimeout(async () => {
           await stop();
           console.log(`Stopped watching address: ${addressToWatch}`);
-        }, 10000);
+        }, 60000);
       } catch (error) {
         console.error("Error watching address:", error);
       }
