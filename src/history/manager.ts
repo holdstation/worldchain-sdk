@@ -31,9 +31,12 @@ export class Manager {
 
     try {
       if (this.listeners[address.toLowerCase()]) {
-        throw new Error(
-          `Already listening to ${address}, please stop it first`
-        );
+        const runner = this.listeners[address.toLowerCase()];
+        if (runner) {
+          runner.stop();
+        }
+
+        delete this.listeners[address.toLowerCase()];
       }
 
       this.listeners[address.toLowerCase()] = new Runner(
