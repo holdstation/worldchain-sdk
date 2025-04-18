@@ -15,7 +15,7 @@ export class IndexedDBTransactionStorageImpl implements TransactionStorage {
   private db: Promise<IDBPDatabase<TransactionDB>>;
 
   constructor(dbName: string) {
-    this.db = openDB<TransactionDB>(dbName, 1, {
+    this.db = openDB<TransactionDB>(dbName, 2, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("transactions")) {
           const store = db.createObjectStore("transactions", {
