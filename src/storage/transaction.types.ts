@@ -1,15 +1,23 @@
+export enum TransactionStatus {
+  NotDefined = 0,
+  Fail = 1,
+  Success = 2,
+}
+
 type ExtractedTransaction = {
   // Main fields extracted from the evm transaction
 
   hash: string; // Primary key
   to: string;
   block: number;
-  success: boolean;
+  success: TransactionStatus;
 };
 
 type Transfer = {
   tokenAddress: string;
   amount: string;
+  from: string;
+  to: string;
 };
 
 type CalculatedTransactionField = {

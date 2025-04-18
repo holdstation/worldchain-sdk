@@ -33,6 +33,22 @@ export class IndexedDBTransactionStorageImpl implements TransactionStorage {
     await db.put("transactions", transaction);
   }
 
+  async saveMultiple(transactions: Transaction[]): Promise<void> {
+    const db = await this.db;
+
+    // Start a transaction for the "transactions" object store
+    const tx = db.transaction("transactions", "readwrite");
+    const store = tx.objectStore("transactions");
+
+    // Add each transaction to the store
+    for (const transaction of transactions) {
+      await store.put(transaction);
+    }
+
+    // Commit the transaction
+    await tx.done;
+  }
+
   async find(offset: number, limit: number): Promise<Transaction[]> {
     const db = await this.db;
     // Use index to get transactions sorted by block in descending order

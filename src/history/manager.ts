@@ -1,5 +1,13 @@
 import { Mutex } from "async-mutex";
 import { ethers } from "ethers";
+import {
+  IndexedDBStorageImpl,
+  IndexedDBTransactionStorageImpl,
+  Token,
+  Transaction,
+} from "../storage";
+import { TransactionStatus } from "../storage/transaction.types";
+import { tokenInfo } from "../token";
 
 type TokenTransfer = {
   tokenAddress: string;
@@ -12,11 +20,13 @@ export class Manager {
   private listeners: Record<string, Runner> = {};
   private readonly mutex = new Mutex();
 
-  constructor(private readonly provider: ethers.JsonRpcProvider) {}
+  constructor(
+    private readonly provider: ethers.JsonRpcProvider,
+    private readonly chainId: number
+  ) {}
 
   watch = async (address: string, listenner: any) => {
     const mutex = this.mutex;
-
     const release = await mutex.acquire();
 
     try {
@@ -28,7 +38,8 @@ export class Manager {
 
       this.listeners[address.toLowerCase()] = new Runner(
         address,
-        this.provider
+        this.provider,
+        this.chainId
       );
 
       return {
@@ -71,11 +82,20 @@ export class Runner {
 
   // delay between range scan
   private delay = 1000;
+  //db
+  private tokenStorage: IndexedDBStorageImpl;
+  private transactionStorage: IndexedDBTransactionStorageImpl;
 
   constructor(
     private readonly walletAddress: string,
-    private readonly provider: ethers.JsonRpcProvider
-  ) {}
+    private readonly provider: ethers.JsonRpcProvider,
+    private readonly chainId: number
+  ) {
+    this.tokenStorage = new IndexedDBStorageImpl("TokenDB");
+    this.transactionStorage = new IndexedDBTransactionStorageImpl(
+      "TransactionDB"
+    );
+  }
 
   run = async () => {
     this.lastBlock = await this.provider.getBlockNumber();
@@ -94,29 +114,34 @@ export class Runner {
   };
 
   private async loop() {
-    // while (!this.aborted) {
-    if (this.minBlock < this.lastBlock - 100_000) {
-      console.debug(
-        `MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`
-      );
-      return;
-    }
+    while (!this.aborted) {
+      if (this.minBlock < this.lastBlock - 100_000) {
+        console.debug(
+          `MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`
+        );
+        return;
+      }
 
-    await this.queryLogs(this.minBlock - 10_000, this.minBlock)
-      .then(() => {
-        // Update minBlock to avoid duplicated query
-        this.minBlock = this.minBlock - 10_000;
-      })
-      .catch((e: any) => {
-        // This is tricky step to avoid missing data
-        console.error("Error in sideMinBlock", e);
+      await this.queryLogs(this.minBlock - 10_000, this.minBlock)
+        .then(() => {
+          // Update minBlock to avoid duplicated query
+          this.minBlock = this.minBlock - 10_000;
+        })
+        .catch((e: any) => {
+          // This is tricky step to avoid missing data
+          console.error("Error in sideMinBlock", e);
+        });
+
+      // Delay to avoid rate limit
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(null), this.delay);
       });
+    }
+  }
 
-    // Delay to avoid rate limit
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(null), this.delay);
-    });
-    // }
+  getMethodId(data: string) {
+    const methodId = data.slice(0, 10);
+    return methodId;
   }
 
   private async queryLogs(from: number, to: number) {
@@ -157,10 +182,23 @@ export class Runner {
 
       const txsummary: Record<string, TokenTransfer[]> = {};
       const combinedLogs = [...logs[0], ...logs[1]];
-
       for (let log of combinedLogs) {
         if (!txsummary[log.transactionHash]) {
           txsummary[log.transactionHash] = [];
+        }
+
+        let token: Token;
+        try {
+          token = await this.tokenStorage.findByAddress(log.address);
+        } catch (error) {
+          const tokens = await tokenInfo(log.address);
+          token = {
+            ...tokens[log.address],
+            address: log.address,
+            chainId: this.chainId,
+          };
+
+          await this.tokenStorage.save(token);
         }
 
         txsummary[log.transactionHash].push({
@@ -172,16 +210,38 @@ export class Runner {
       }
 
       const txs = await Promise.all(
-        Array.from(Object.keys(txsummary)).map(async (tx) => {
-          const txData = await this.provider.getTransaction(tx);
+        Array.from(Object.keys(txsummary)).map(async (hash) => {
+          const txData = await this.provider.getTransaction(hash);
 
           return txData;
         })
       );
 
+      const transactions: Transaction[] = [];
       for (const tx of txs) {
-        console.log(14888, "tx", tx);
+        if (!tx) {
+          continue;
+        }
+
+        transactions.push({
+          hash: tx.hash,
+          block: tx.blockNumber ?? 0,
+          to: tx.to ?? "",
+          success: TransactionStatus.NotDefined,
+          date: new Date((tx.blockNumber ?? 0) * 1000),
+          method: this.getMethodId(tx.data),
+          protocol: "", // TODO
+          transfers: txsummary[tx.hash].map((transfer) => ({
+            tokenAddress: transfer.tokenAddress,
+            amount: transfer.amount,
+            from: transfer.from,
+            to: transfer.to,
+          })),
+        });
       }
+
+      // Save transaction to storage
+      await this.transactionStorage.saveMultiple(transactions);
     }
   }
 }

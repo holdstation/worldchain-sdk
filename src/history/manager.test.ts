@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { Runner } from "./manager";
+jest.setTimeout(0);
 
 describe("HistoryManager", () => {
   let provider: ethers.JsonRpcProvider;
@@ -12,17 +13,16 @@ describe("HistoryManager", () => {
 
   it("get txs", async () => {
     const runner = new Runner(
-      "0xd92144D6bF421Aa038f872545AAF07b4328dB279",
-      provider
+      "0x138021392da7fdff698a453c94bf914b5045c3a0",
+      provider,
+      480
     );
     await runner.run();
-
-    console.log("done roi nhe");
-  });
+  }, 60000);
 
   it("manual filter logs", async () => {
     const topicAddress = ethers
-      .zeroPadValue("0xd92144D6bF421Aa038f872545AAF07b4328dB279", 32)
+      .zeroPadValue("0x138021392da7fdff698a453c94bf914b5045c3a0", 32)
       .toLowerCase();
 
     const logs = await provider.getLogs({
@@ -37,5 +37,5 @@ describe("HistoryManager", () => {
 
     console.log("Logs", logs);
     console.log("Logs length", logs.length);
-  });
+  }, 60000);
 });
