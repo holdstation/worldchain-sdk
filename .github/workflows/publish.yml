@@ -17,11 +17,13 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '23'
+          node-version: '20'  # Node 23 is not stable yet; use LTS
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Authenticate with npm
-        run: yarn config set npmAuthToken ${{ secrets.NPM_TOKEN }}
+      - name: Set up npm authentication
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -30,6 +32,6 @@ jobs:
         run: yarn build
 
       - name: Publish to npm
-        run: yarn publish --non-interactive
+        run: yarn publish --non-interactive --access public
         env:
-          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org'
