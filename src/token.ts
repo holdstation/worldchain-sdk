@@ -6,7 +6,7 @@ import { config } from "./config";
 // Transfer event topic (keccak256 hash of Transfer(address,address,uint256))
 const TRANSFER_TOPIC =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-const iface = new ethers.Interface([
+const iface = new ethers.utils.Interface([
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 ]);
 
@@ -38,7 +38,7 @@ export async function tokenOf(
   const tokenList = await Promise.all(
     chunked.map(async ([startBlock, endBlock]) => {
       const logs = await config.getProvider().getLogs({
-        topics: [[TRANSFER_TOPIC], [], [ethers.zeroPadValue(wallet, 32)]],
+        topics: [[TRANSFER_TOPIC], [], [ethers.utils.hexZeroPad(wallet, 32)]],
         fromBlock: startBlock,
         toBlock: endBlock,
       });
@@ -71,7 +71,7 @@ export async function tokenInfo(
   const calls: MulticallRequest[] = [];
 
   for (const tokenAddress of tokenAddresses) {
-    if (!ethers.isAddress(tokenAddress)) {
+    if (!ethers.utils.isAddress(tokenAddress)) {
       throw new Error(`Invalid token address: ${tokenAddress}`);
     }
 
@@ -102,7 +102,7 @@ export async function tokenInfo(
     const name = data[i + 2];
 
     result[tokenAddress] = {
-      decimals: Number(ethers.toBigInt(decimals).valueOf()),
+      decimals: Number(decimals.toString()),
       symbol: erc20Interface.decodeFunctionResult("symbol", symbol).toString(),
       name: erc20Interface.decodeFunctionResult("name", name).toString(),
     };

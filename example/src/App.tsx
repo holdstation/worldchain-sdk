@@ -9,7 +9,7 @@ function App() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const provider = new ethers.JsonRpcProvider(
+    const provider = new ethers.providers.JsonRpcProvider(
       "https://worldchain-mainnet.gateway.tenderly.co"
     );
     const manager = new sdk.Manager(provider, 480);
