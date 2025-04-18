@@ -66,6 +66,8 @@ export class Manager {
           if (runner) {
             runner.stop();
           }
+
+          delete this.listeners[address.toLowerCase()];
         },
       };
     } finally {
