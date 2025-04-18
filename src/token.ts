@@ -1,4 +1,6 @@
 import { ethers } from "ethers";
+import { MULTICALL3_ABI } from "./abi/multicall3";
+import { MulticallRequest, erc20Interface } from "./balance";
 import { config } from "./config";
 
 // Transfer event topic (keccak256 hash of Transfer(address,address,uint256))
@@ -7,6 +9,12 @@ const TRANSFER_TOPIC =
 const iface = new ethers.Interface([
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 ]);
+
+type MulticallTokenInfoResponse = {
+  decimals: number;
+  symbol: string;
+  name: string;
+};
 
 export async function tokenOf(
   wallet: string,
@@ -49,4 +57,56 @@ export async function tokenOf(
   }
 
   return Array.from(tokenSet);
+}
+
+export async function tokenInfo(
+  ...tokenAddresses: string[]
+): Promise<Record<string, MulticallTokenInfoResponse>> {
+  const multicallContract = new ethers.Contract(
+    config.multicall3Address,
+    MULTICALL3_ABI,
+    config.getProvider()
+  );
+
+  const calls: MulticallRequest[] = [];
+
+  for (const tokenAddress of tokenAddresses) {
+    if (!ethers.isAddress(tokenAddress)) {
+      throw new Error(`Invalid token address: ${tokenAddress}`);
+    }
+
+    calls.push(
+      {
+        target: tokenAddress,
+        callData: erc20Interface.encodeFunctionData("decimals"),
+      },
+      {
+        target: tokenAddress,
+        callData: erc20Interface.encodeFunctionData("symbol"),
+      },
+      {
+        target: tokenAddress,
+        callData: erc20Interface.encodeFunctionData("name"),
+      }
+    );
+  }
+
+  const [_, data] = await multicallContract.aggregate(calls);
+
+  const result: Record<string, MulticallTokenInfoResponse> = {};
+
+  for (let i = 0; i < data.length; i += 3) {
+    const tokenAddress = tokenAddresses[i / 3];
+    const decimals = data[i];
+    const symbol = data[i + 1];
+    const name = data[i + 2];
+
+    result[tokenAddress] = {
+      decimals: Number(ethers.toBigInt(decimals).valueOf()),
+      symbol: erc20Interface.decodeFunctionResult("symbol", symbol).toString(),
+      name: erc20Interface.decodeFunctionResult("name", name).toString(),
+    };
+  }
+
+  return result;
 }
