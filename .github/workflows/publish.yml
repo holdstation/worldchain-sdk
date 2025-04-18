@@ -20,11 +20,6 @@ jobs:
           node-version: '20'  # Node 23 is not stable yet; use LTS
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Set up npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
@@ -32,6 +27,6 @@ jobs:
         run: yarn build
 
       - name: Publish to npm
-        run: yarn publish
+        run: npm publish
         env:
-          NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
