@@ -1,12 +1,15 @@
 {
   "name": "@holdstation/worldchain-sdk",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "tsup": {
     "entry": [
       "src/index.ts"
