@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'  # Node 23 is not stable yet; use LTS
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://registry.npmjs.com'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
