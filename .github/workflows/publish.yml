@@ -1,0 +1,35 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger only on version tags like v1.2.3
+
+jobs:
+  publish:
+    name: Publish npm package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Authenticate with npm
+        run: yarn config set npmAuthToken ${{ secrets.NPM_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build project
+        run: yarn build
+
+      - name: Publish to npm
+        run: yarn publish --non-interactive
+        env:
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
