@@ -21,7 +21,7 @@ export class Manager {
   private readonly mutex = new Mutex();
 
   constructor(
-    private readonly provider: ethers.JsonRpcProvider,
+    private readonly provider: ethers.providers.JsonRpcProvider,
     private readonly chainId: number
   ) {}
 
@@ -88,7 +88,7 @@ export class Runner {
 
   constructor(
     private readonly walletAddress: string,
-    private readonly provider: ethers.JsonRpcProvider,
+    private readonly provider: ethers.providers.JsonRpcProvider,
     private readonly chainId: number
   ) {
     this.tokenStorage = new IndexedDBStorageImpl("TokenDB");
@@ -164,8 +164,8 @@ export class Runner {
   }
 
   private async queryLogs(from: number, to: number) {
-    const topicAddress = ethers
-      .zeroPadValue(this.walletAddress, 32)
+    const topicAddress = ethers.utils
+      .hexZeroPad(this.walletAddress, 32)
       .toLowerCase();
 
     // our rpc allow upto 2000 block
@@ -226,7 +226,7 @@ export class Runner {
 
         txsummary[log.transactionHash].push({
           tokenAddress: log.address,
-          amount: ethers.toBigInt(log.data).toString(),
+          amount: ethers.BigNumber.from(log.data).toString(),
           from: log.topics[1],
           to: log.topics[2],
         });

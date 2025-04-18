@@ -3,7 +3,7 @@ import { ERC20_ABI } from "./abi/erc20";
 import { MULTICALL3_ABI } from "./abi/multicall3";
 import { config } from "./config";
 
-export const erc20Interface = new ethers.Interface(ERC20_ABI);
+export const erc20Interface = new ethers.utils.Interface(ERC20_ABI);
 
 export type MulticallRequest = {
   target: string;
@@ -30,7 +30,7 @@ export async function balanceOf(
   const calls: MulticallRequest[] = [];
 
   for (const tokenAddress of tokenAddresses) {
-    if (!ethers.isAddress(tokenAddress)) {
+    if (!ethers.utils.isAddress(tokenAddress)) {
       throw new Error(`Invalid token address: ${tokenAddress}`);
     }
 
@@ -66,8 +66,8 @@ export async function balanceOf(
     const name = data[i + 3];
 
     result[tokenAddress] = {
-      balance: ethers.toBigInt(balance).toString(),
-      decimals: Number(ethers.toBigInt(decimals).valueOf()),
+      balance: balance.toString(),
+      decimals: Number(decimals.toString()),
       symbol: erc20Interface.decodeFunctionResult("symbol", symbol).toString(),
       name: erc20Interface.decodeFunctionResult("name", name).toString(),
     };
