@@ -264,11 +264,7 @@ export class Runner {
       }
 
       // Save transaction to storage
-      try {
-        await this.transactionStorage.saveMultiple(transactions);
-      } catch (error) {
-        console.error("Error saving transaction", error);
-      }
+      await this.transactionStorage.saveMultiple(transactions);
     }
   }
 }
