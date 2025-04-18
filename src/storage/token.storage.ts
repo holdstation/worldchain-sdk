@@ -12,7 +12,7 @@ export class IndexedDBStorageImpl implements TokenStorage {
   private db: Promise<IDBPDatabase<TokenDB>>;
 
   constructor(dbName: string) {
-    this.db = openDB<TokenDB>(dbName, 1, {
+    this.db = openDB<TokenDB>(dbName, 2, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("tokens")) {
           db.createObjectStore("tokens", { keyPath: "address" });
