@@ -58,7 +58,7 @@ Returns the best price for a direct swap between two tokens using Uniswap V3 poo
 import { ethers } from "ethers";
 import { Quoter } from "@holdstation/worldchain-sdk";
 
-const provider = new ethers.providers.StaticJsonRpcProvider("https://worldchain-mainnet.g.alchemy.com/public", {
+const provider = new ethers.providers.StaticJsonRpcProvider("<YOUR_RPC_URL>", {
   chainId: 480,
   name: "worldchain",
 });
@@ -76,6 +76,19 @@ console.log("All routes:", result.all);
 #### Smart Quote
 
 Finds the best route and price using Uniswap's smart order router (may be slower).
+
+By default, the rate is quoted via **USDC.e** as the stable token.  
+You can easily change the stable token to any other token address by passing the `stableToken` option to the `Quoter` constructor:
+
+```typescript
+const quoter = new Quoter(provider, {
+  stableToken: "0xYourPreferredStableTokenAddress"
+});
+```
+
+This allows you to get quotes against any stable token or asset you prefer, not just USDC.e.
+
+Example usage:
 
 ```typescript
 const result = await quoter.smart(WETH, {
@@ -119,7 +132,7 @@ it("smart quote onchain - WETH -> USDCe", async () => {
   expect(result.best).toBeDefined();
   expect(Number(result.best)).toBeGreaterThan(1000);
   expect(Number(result.best)).toBeLessThan(2000);
-}, 30_000);
+}, 60_000);
 ```
 
 ---

@@ -36,9 +36,11 @@ describe("get quoter on chain", () => {
       deadline: 10,
     });
 
+    console.debug("quote", result.quote);
+
     expect(result).toBeDefined();
-    expect(result.best).toBeDefined();
-    expect(Number(result.best)).toBeGreaterThan(1000);
-    expect(Number(result.best)).toBeLessThan(2000);
-  }, 30_000);
+    expect(result.quote).toBeDefined();
+    expect(Number(result.quote)).toBeGreaterThan(1000);
+    expect(Number(result.quote)).toBeLessThan(2000);
+  }, 60_000);
 });

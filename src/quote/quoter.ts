@@ -1,5 +1,5 @@
 import { Percent, Token, TradeType } from "@uniswap/sdk-core";
-import { AlphaRouter, parseAmount, SwapType } from "@uniswap/smart-order-router";
+import { AlphaRouter, parseAmount, SwapRoute, SwapType } from "@uniswap/smart-order-router";
 import { UniversalRouterVersion } from "@uniswap/universal-router-sdk";
 import { ethers } from "ethers";
 import { MULTICALL3_ABI } from "../abi/multicall3";
@@ -22,6 +22,7 @@ export class Quoter {
   private readonly multicallContract: ethers.Contract;
   private readonly tokenProvider: TokenProvider;
   private readonly alphaRouter: AlphaRouter;
+  private softcache: Record<string, { data: { quote: string; raw: SwapRoute }; createdAt: number }> = {};
 
   constructor(private readonly provider: ethers.providers.JsonRpcProvider, options?: Partial<Options>) {
     // default fallback to usdc.e
@@ -102,11 +103,26 @@ export class Quoter {
    */
   async smart(
     tokenAddress: string,
-    options?: Partial<{
+    {
+      slippage = 3,
+      deadline = 360,
+      cacheTTL = 60_000,
+    }: Partial<{
       slippage: number;
       deadline: number;
+      cacheTTL: number;
     }>
   ) {
+    const key = `${tokenAddress}-${slippage}-${deadline}`;
+    if (this.softcache[key]) {
+      const cached = this.softcache[key];
+
+      // only cache for 1 min
+      if (Date.now() - cached.createdAt < cacheTTL) {
+        return cached.data;
+      }
+    }
+
     const chainId = await this.provider.getNetwork().then((n) => n.chainId);
 
     const details = await this.tokenProvider.details(tokenAddress, this.stableToken);
@@ -127,10 +143,7 @@ export class Quoter {
     );
 
     const tradeType = TradeType.EXACT_INPUT;
-    let slippageTolerance = new Percent(3, 100); // 3%
-    if (options?.slippage) {
-      slippageTolerance = new Percent(options.slippage, 100);
-    }
+    const slippageTolerance = new Percent(slippage, 100); // 3%
 
     const swap = await this.alphaRouter.route(
       parseAmount("1", tokenIn),
@@ -140,7 +153,7 @@ export class Quoter {
         type: SwapType.UNIVERSAL_ROUTER,
         version: UniversalRouterVersion.V1_2,
         slippageTolerance,
-        deadlineOrPreviousBlockhash: options?.deadline ?? parseDeadline(360),
+        deadlineOrPreviousBlockhash: parseDeadline(deadline),
       },
       ROUTING_CONFIG
     );
@@ -149,9 +162,17 @@ export class Quoter {
       throw new Error("No swap found");
     }
 
-    return {
-      best: swap.quote.toFixed(6),
+    const finalData = {
+      quote: swap.quote.toFixed(6),
       raw: swap,
     };
+
+    // save to softcache
+    this.softcache[key] = {
+      data: finalData,
+      createdAt: Date.now(),
+    };
+
+    return finalData;
   }
 }
