@@ -4,4 +4,5 @@ export { balanceOf } from "./balance";
 export { config } from "./config";
 export * from "./history";
 export * from "./storage";
-export { tokenOf } from "./token";
+export { tokenOf } from "./token/token-provider";
+

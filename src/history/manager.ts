@@ -1,13 +1,8 @@
 import { Mutex } from "async-mutex";
 import { ethers } from "ethers";
-import {
-  IndexedDBStorageImpl,
-  IndexedDBTransactionStorageImpl,
-  Token,
-  Transaction,
-} from "../storage";
+import { IdbTokenStorage, IndexedDBTransactionStorageImpl, Token, Transaction } from "../storage";
 import { TransactionStatus } from "../storage/transaction.types";
-import { tokenInfo } from "../token";
+import { TokenProvider } from "../token";
 
 type TokenTransfer = {
   tokenAddress: string;
@@ -19,11 +14,11 @@ type TokenTransfer = {
 export class Manager {
   private listeners: Record<string, Runner> = {};
   private readonly mutex = new Mutex();
+  private readonly tokenProvider: TokenProvider;
 
-  constructor(
-    private readonly provider: ethers.providers.JsonRpcProvider,
-    private readonly chainId: number
-  ) {}
+  constructor(private readonly provider: ethers.providers.JsonRpcProvider, private readonly chainId: number) {
+    this.tokenProvider = new TokenProvider({ provider });
+  }
 
   watch = async (address: string, listenner: any) => {
     const mutex = this.mutex;
@@ -39,11 +34,7 @@ export class Manager {
         delete this.listeners[address.toLowerCase()];
       }
 
-      this.listeners[address.toLowerCase()] = new Runner(
-        address,
-        this.provider,
-        this.chainId
-      );
+      this.listeners[address.toLowerCase()] = new Runner(address, this.provider, this.chainId, this.tokenProvider);
 
       return {
         start: async () => {
@@ -57,9 +48,7 @@ export class Manager {
               .then(() => {
                 console.debug(`Runner started for ${address}`);
               })
-              .catch((e: any) =>
-                console.error(`Error starting runner for ${address}`, e)
-              );
+              .catch((e: any) => console.error(`Error starting runner for ${address}`, e));
           } finally {
             release();
           }
@@ -88,18 +77,17 @@ export class Runner {
   // delay between range scan
   private delay = 1000;
   //db
-  private tokenStorage: IndexedDBStorageImpl;
+  private tokenStorage: IdbTokenStorage;
   private transactionStorage: IndexedDBTransactionStorageImpl;
 
   constructor(
     private readonly walletAddress: string,
     private readonly provider: ethers.providers.JsonRpcProvider,
-    private readonly chainId: number
+    private readonly chainId: number,
+    private readonly tokenProvider: TokenProvider
   ) {
-    this.tokenStorage = new IndexedDBStorageImpl("TokenDB");
-    this.transactionStorage = new IndexedDBTransactionStorageImpl(
-      "TransactionDB"
-    );
+    this.tokenStorage = new IdbTokenStorage("TokenDB");
+    this.transactionStorage = new IndexedDBTransactionStorageImpl("TransactionDB");
   }
 
   run = async () => {
@@ -123,9 +111,7 @@ export class Runner {
   private async loop() {
     while (!this.aborted) {
       if (this.lastBlock < this.minBlock) {
-        console.debug(
-          `MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`
-        );
+        console.debug(`MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`);
         return;
       }
 
@@ -169,9 +155,7 @@ export class Runner {
   }
 
   private async queryLogs(from: number, to: number) {
-    const topicAddress = ethers.utils
-      .hexZeroPad(this.walletAddress, 32)
-      .toLowerCase();
+    const topicAddress = ethers.utils.hexZeroPad(this.walletAddress, 32).toLowerCase();
 
     // our rpc allow upto 2000 block
 
@@ -188,21 +172,14 @@ export class Runner {
             this.provider.getLogs({
               fromBlock: Math.max(i - this.blockstep, from),
               toBlock: i,
-              topics: [
-                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                [topicAddress],
-              ],
+              topics: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", [topicAddress]],
             }),
 
             // transfer to this address
             this.provider.getLogs({
               fromBlock: Math.max(i - this.blockstep, from),
               toBlock: i,
-              topics: [
-                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                null,
-                [topicAddress],
-              ],
+              topics: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", null, [topicAddress]],
             }),
           ]),
         3
@@ -219,7 +196,8 @@ export class Runner {
         try {
           token = await this.tokenStorage.findByAddress(log.address);
         } catch (error) {
-          const tokens = await tokenInfo(log.address);
+          const tokens = await this.tokenProvider.details(log.address);
+
           token = {
             ...tokens[log.address],
             address: log.address,
