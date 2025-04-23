@@ -1,6 +1,6 @@
 {
   "name": "@holdstation/worldchain-sdk",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -41,8 +41,12 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
+    "@uniswap/smart-order-router": "^4.21.1",
     "@worldcoin/minikit-js": "^1.8.0",
-    "ethers": "^5.8.0"
+    "async-mutex": "^0.5.0",
+    "ethers": "^5.8.0",
+    "idb": "^8.0.2",
+    "node-cache": "^5.1.2"
   },
   "prettier": {
     "printWidth": 120
