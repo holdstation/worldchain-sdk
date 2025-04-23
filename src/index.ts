@@ -1,8 +1,7 @@
 // DO NOT WRITE ANY CODE HERE
 // THIS FILE ONLY FOR EXPORTING TYPES
-export { balanceOf } from "./balance";
 export { config } from "./config";
 export * from "./history";
+export * from "./quote";
 export * from "./storage";
-export { tokenOf } from "./token/token-provider";
-
+export * from "./token";
