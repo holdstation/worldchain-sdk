@@ -8,7 +8,7 @@ interface TokenDB extends DBSchema {
   };
 }
 
-export class IndexedDBStorageImpl implements TokenStorage {
+export class IdbTokenStorage implements TokenStorage {
   private db: Promise<IDBPDatabase<TokenDB>>;
 
   constructor(dbName: string) {

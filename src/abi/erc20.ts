@@ -1,4 +1,6 @@
-export const ERC20_ABI = [
+import { ethers } from "ethers";
+
+const ERC20_ABI = [
   {
     constant: true,
     inputs: [],
@@ -220,3 +222,5 @@ export const ERC20_ABI = [
     type: "event",
   },
 ];
+
+export const erc20 = new ethers.utils.Interface(ERC20_ABI);
