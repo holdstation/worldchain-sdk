@@ -1,62 +1,20 @@
-import * as sdk from "@holdstation/worldchain-sdk";
-import { ethers } from "ethers";
-import { useEffect, useState } from "react";
+import { lazy } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
 import "./App.css";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+
+const HomePage = lazy(() => import("./pages/home"));
+const HistoryPage = lazy(() => import("./pages/history"));
 
 function App() {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const provider = new ethers.providers.JsonRpcProvider(
-      "https://worldchain-mainnet.gateway.tenderly.co"
-    );
-    const manager = new sdk.Manager(provider, 480);
-    const addressToWatch = "0x138021392da7fdff698a453c94bf914b5045c3a0"; // Replace with the address you want to watch
-
-    const watch = async () => {
-      try {
-        const { start, stop } = await manager.watch(addressToWatch, () => {});
-        await start();
-
-        setTimeout(async () => {
-          await stop();
-          console.log(`Stopped watching address: ${addressToWatch}`);
-        }, 60000);
-      } catch (error) {
-        console.error("Error watching address:", error);
-      }
-    };
-
-    watch();
-
-    // Cleanup function if needed
-  }, []);
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/">
+          <Route element={<HomePage />}></Route>
+          <Route path="history" element={<HistoryPage />}></Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
