@@ -16,7 +16,11 @@ export class Manager {
   private readonly mutex = new Mutex();
   private readonly tokenProvider: TokenProvider;
 
-  constructor(private readonly provider: ethers.providers.JsonRpcProvider, private readonly chainId: number) {
+  constructor(
+    private readonly provider: ethers.providers.JsonRpcProvider,
+    private readonly chainId: number,
+    private readonly blockToWatch: number = 100_000
+  ) {
     this.tokenProvider = new TokenProvider({ provider });
   }
 
@@ -44,7 +48,7 @@ export class Manager {
             const runner = this.listeners[address.toLowerCase()];
 
             runner
-              .run()
+              .run(this.blockToWatch)
               .then(() => {
                 console.debug(`Runner started for ${address}`);
               })
@@ -90,10 +94,10 @@ export class Runner {
     this.transactionStorage = new IndexedDBTransactionStorageImpl("TransactionDB");
   }
 
-  run = async () => {
+  run = async (blockToWatch: number) => {
     this.lastBlock = await this.provider.getBlockNumber();
     const latestBlock = await this.transactionStorage.findLastBlock();
-    const minBlock = Math.max(latestBlock, this.lastBlock - 100_000); // get first 100_000 block
+    const minBlock = Math.max(latestBlock, this.lastBlock - blockToWatch); // get first 100_000 block
     this.minBlock = minBlock;
 
     console.debug("Block", { last: this.lastBlock, min: this.minBlock });

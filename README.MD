@@ -135,6 +135,7 @@ const amount = 10; // 10 Tokens
 const receiver = "0xAddress";
 const result = await sender.send({ amount, token: tokenAddress, to: receiver });
 console.
+
 ```
 
 ---
@@ -215,6 +216,12 @@ console.log(balances[holder2]); // string balance of WLD for holder2
 ```
 
 ---
+
+## History
+
+### Example usage:
+
+## [example/src/pages/history.tsx](./example/src/pages/history.tsx)
 
 ## Testing
 
