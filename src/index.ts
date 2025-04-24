@@ -3,5 +3,6 @@
 export { config } from "./config";
 export * from "./history";
 export * from "./quote";
+export * from "./send";
 export * from "./storage";
 export * from "./token";
