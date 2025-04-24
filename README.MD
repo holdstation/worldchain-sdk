@@ -82,7 +82,7 @@ You can easily change the stable token to any other token address by passing the
 
 ```typescript
 const quoter = new Quoter(provider, {
-  stableToken: "0xYourPreferredStableTokenAddress"
+  stableToken: "0xYourPreferredStableTokenAddress",
 });
 ```
 
@@ -92,12 +92,49 @@ Example usage:
 
 ```typescript
 const result = await quoter.smart(WETH, {
-  slippage: 3,    // percent
-  deadline: 10,   // seconds
+  slippage: 3, // percent
+  deadline: 10, // seconds
 });
 
 console.log("Best smart route:", result.best); // e.g., ~1797
 console.log("Raw swap object:", result.raw);
+```
+
+---
+
+## Usage
+
+### Sender: Send Token On-Chain
+
+Send Native
+
+Example usage:
+
+```typescript
+import { ethers } from "ethers";
+import { Sender } from "@holdstation/worldchain-sdk";
+
+const provider = new ethers.providers.StaticJsonRpcProvider("<YOUR_RPC_URL>", {
+  chainId: 480,
+  name: "worldchain",
+});
+const sender = new Sender(provider);
+const amount = 0.1; // 0.1 ETH
+const receiver = "0xAddress";
+const result = await sender.send({ amount, to: receiver });
+console.log("result:", result);
+```
+
+Send Erc20
+
+Example usage:
+
+```typescript
+const tokenAddress = "0xTokenAddress";
+const amount = 10; // 10 Tokens
+const receiver = "0xAddress";
+const result = await sender.send({ amount, token: tokenAddress, to: receiver });
+console.
 ```
 
 ---
@@ -126,8 +163,8 @@ const USDCe = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
 
 const details = await tokenProvider.details(WETH, USDCe);
 
-console.log(details[WETH]);   // { address, chainId, decimals, symbol, name }
-console.log(details[USDCe]);  // { address, chainId, decimals, symbol, name }
+console.log(details[WETH]); // { address, chainId, decimals, symbol, name }
+console.log(details[USDCe]); // { address, chainId, decimals, symbol, name }
 ```
 
 ### Get All Tokens Held by a Wallet
@@ -156,9 +193,9 @@ const balances = await tokenProvider.balanceOf({
   tokens: [WETH, USDCe, WLD],
 });
 
-console.log(balances[WETH]);   // string balance of WETH
-console.log(balances[USDCe]);  // string balance of USDCe
-console.log(balances[WLD]);    // string balance of WLD
+console.log(balances[WETH]); // string balance of WETH
+console.log(balances[USDCe]); // string balance of USDCe
+console.log(balances[WLD]); // string balance of WLD
 ```
 
 #### Get Balances of a Token for Multiple Wallets
