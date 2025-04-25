@@ -1,17 +1,39 @@
 import { Percent, Token, TradeType } from "@uniswap/sdk-core";
-import { AlphaRouter, parseAmount, SwapRoute, SwapType } from "@uniswap/smart-order-router";
+import { AlphaRouter, SwapRoute, SwapType, parseAmount } from "@uniswap/smart-order-router";
 import { UniversalRouterVersion } from "@uniswap/universal-router-sdk";
 import { ethers } from "ethers";
 import { MULTICALL3_ABI } from "../abi/multicall3";
 import { viewQuoterv3ABI } from "../abi/view-quoter-v3";
 import { config } from "../config";
 import { TokenProvider } from "../token";
-import { getQuoteToken, initializeAlphaRouter, parseDeadline, ROUTING_CONFIG } from "./alpha-router";
+import { ROUTING_CONFIG, getQuoteToken, initializeAlphaRouter, parseDeadline } from "./alpha-router";
 
 type Options = {
   viewQuoterv3: string;
   stableToken: string;
   tokenProvider: TokenProvider;
+};
+
+type SmartQuoterOptions = {
+  /**
+   * The allowed slippage percentage for the trade (e.g., 3 for 3%).
+   */
+  slippage: number;
+
+  /**
+   * The deadline for the trade in seconds (e.g., 360 for 6 minutes).
+   */
+  deadline: number;
+
+  /**
+   * The time-to-live for the cache in milliseconds (e.g., 60000 for 1 minute).
+   */
+  cacheTTL: number;
+
+  /**
+   * The destination address for the trade (e.g., the stable token address).
+   */
+  destinationAddress: string;
 };
 
 export class Quoter {
@@ -37,6 +59,21 @@ export class Quoter {
     this.alphaRouter = initializeAlphaRouter(provider);
   }
 
+  /**
+   * This function provides a simple quote for swapping one token to another using Uniswap V3.
+   * It calculates the rates for different fee tiers (500, 3000, 10000) and determines the best rate.
+   *
+   * @param tokenIn - The address of the input token.
+   * @param tokenOut - The address of the output token.
+   * @returns An object containing the best rate and all calculated rates for the given token pair.
+   *
+   * Steps:
+   * 1. Fetch token details for the input and output tokens.
+   * 2. Encode calls for each fee tier using the `quoteExactInputSingle` function.
+   * 3. Use the multicall contract to execute all calls with `allowFailure` support.
+   * 4. Decode the results and calculate rates for each fee tier.
+   * 5. Identify the best rate among the successful calls.
+   */
   async simple(tokenIn: string, tokenOut: string) {
     const token = await this.tokenProvider.details(tokenIn, tokenOut);
     if (!token || !token[tokenIn]) {
@@ -100,20 +137,16 @@ export class Quoter {
    * They find the best route with price, but much more slower than the simple quote
    *
    * @param tokenAddress the token you want to get quote
+   * @param options optional parameters for slippage, deadline, cacheTTL, and destinationAddress
+   *                - If not provided, defaults are used:
+   *                  - slippage: 3 (3%)
+   *                  - deadline: 360 seconds (6 minutes)
+   *                  - cacheTTL: 60,000 milliseconds (1 minute)
+   *                  - destinationAddress: stableToken address
    */
-  async smart(
-    tokenAddress: string,
-    {
-      slippage = 3,
-      deadline = 360,
-      cacheTTL = 60_000,
-    }: Partial<{
-      slippage: number;
-      deadline: number;
-      cacheTTL: number;
-    }>
-  ) {
-    const key = `${tokenAddress}-${slippage}-${deadline}`;
+  async smart(tokenAddress: string, options?: Partial<SmartQuoterOptions>) {
+    const { slippage = 3, deadline = 360, cacheTTL = 60_000, destinationAddress = this.stableToken } = options || {};
+    const key = `${tokenAddress}-${slippage}-${deadline}-${destinationAddress}`;
     if (this.softcache[key]) {
       const cached = this.softcache[key];
 
@@ -125,8 +158,8 @@ export class Quoter {
 
     const chainId = await this.provider.getNetwork().then((n) => n.chainId);
 
-    const details = await this.tokenProvider.details(tokenAddress, this.stableToken);
-    if (!details || !details[tokenAddress] || !details[this.stableToken]) {
+    const details = await this.tokenProvider.details(tokenAddress, destinationAddress);
+    if (!details || !details[tokenAddress] || !details[destinationAddress]) {
       throw new Error(`Token not found: ${tokenAddress}`);
     }
 
@@ -136,10 +169,10 @@ export class Quoter {
 
     const tokenOut = new Token(
       chainId,
-      this.stableToken,
-      details[this.stableToken].decimals,
-      details[this.stableToken].symbol,
-      details[this.stableToken].name
+      destinationAddress,
+      details[destinationAddress].decimals,
+      details[destinationAddress].symbol,
+      details[destinationAddress].name
     );
 
     const tradeType = TradeType.EXACT_INPUT;
