@@ -134,8 +134,36 @@ const tokenAddress = "0xTokenAddress";
 const amount = 10; // 10 Tokens
 const receiver = "0xAddress";
 const result = await sender.send({ amount, token: tokenAddress, to: receiver });
-console.
+```
 
+---
+
+### SwapHelper: Swap Token On-Chain using Uniswap
+
+Example usage:
+
+```typescript
+import { ethers } from "ethers";
+import { SwapHelper } from "@holdstation/worldchain-sdk";
+
+const provider = new ethers.providers.StaticJsonRpcProvider("<YOUR_RPC_URL>", {
+  chainId: 480,
+  name: "worldchain",
+});
+const swapHelper = new SwapHelper(provider);
+const quoteParams: SwapParams = {
+  from: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
+  to: "0x4200000000000000000000000000000000000006",
+  amount: "1", // 1 TOKEN
+  slippage: 2, // 2%
+  fee: 0.2, // 0.2%
+};
+
+// get quote
+const quoteResponse = await swapHelper.quote(quoteParams);
+
+//submit swap
+const result = await swapHelper.swap(quoteParams, quoteResponse);
 ```
 
 ---
