@@ -51,7 +51,7 @@ describe("SwapHelper - quote", () => {
     // Mock input parameters
     const params: SwapParams = {
       from: "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
-      to: "0x4200000000000000000000000000000000000006",
+      to: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       amount: "2",
       slippage: 0.3,
       fee: 0.2,
@@ -83,7 +83,7 @@ describe("SwapHelper - quote", () => {
     // Mock input parameters with invalid slippage
     const params: SwapParams = {
       from: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
-      to: "0x4200000000000000000000000000000000000006",
+      to: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       amount: "1",
       slippage: 101, // Invalid slippage (e.g., 5% is out of range if the range is 0-1%)
       fee: 0,

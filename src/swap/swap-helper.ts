@@ -143,7 +143,10 @@ export class SwapHelper {
       .dividedBy(new BigNumber(amountOut.toHexString()))
       .multipliedBy(10 ** tokenOut.decimals);
 
-    let rateTokenIn = await this.quoter.simple(tokenIn.address, this.config.stableCoins[0]);
+    let rateTokenIn = await this.quoter.simple(
+      this.isNativeToken(tokenIn.address) ? this.config.popular.weth : tokenIn.address,
+      this.config.stableCoins[0]
+    );
     if (tokenIn.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
       rateTokenIn = {
         best: "1",
@@ -151,7 +154,10 @@ export class SwapHelper {
       };
     }
 
-    let rateTokenOut = await this.quoter.simple(tokenOut.address, this.config.stableCoins[0]);
+    let rateTokenOut = await this.quoter.simple(
+      this.isNativeToken(tokenOut.address) ? this.config.popular.weth : tokenOut.address,
+      this.config.stableCoins[0]
+    );
     if (tokenOut.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
       rateTokenOut = {
         best: "1",
