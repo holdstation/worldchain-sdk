@@ -8,7 +8,7 @@ import { uniswapRouterV3ABI } from "../abi/uniswap-router-v3";
 import { Quoter } from "../quote";
 import { IdbTokenStorage, Token, TokenStorage } from "../storage";
 import { TokenProvider } from "../token";
-import { QuoteResponse, SwapConfig, SwapParams } from "./swap.types";
+import { Quote0xResponse, QuoteResponse, SwapConfig, SwapParams } from "./swap.types";
 
 export class SwapHelper {
   private readonly tokenProvider: TokenProvider;
@@ -232,7 +232,7 @@ export class SwapHelper {
     }
 
     // Determine the swap path and pool tokens
-    let paths: string[] = [tokenIn.address, weth, tokenOut.address];
+    let paths: string[] = [tokenIn.address, tokenOut.address];
     let tokenInPool = tokenIn.address;
     let tokenOutPool = tokenOut.address;
     if (this.isNativeToken(tokenOut.address)) {
@@ -243,10 +243,6 @@ export class SwapHelper {
     if (this.isNativeToken(tokenIn.address)) {
       paths = [weth, tokenOut.address];
       tokenInPool = weth;
-    }
-
-    if (tokenIn.address.toLowerCase() === weth || tokenOut.address.toLowerCase() === weth) {
-      paths = [tokenIn.address, tokenOut.address];
     }
 
     // Fetch the best rate for the swapFetch the best rate for the swap
@@ -363,6 +359,117 @@ export class SwapHelper {
 
     return resp;
   }
+  private async swap0x(params: SwapParams): Promise<QuoteResponse> {
+    const { from, to, fee = 0.2, slippage = 3 } = params;
+    const { weth } = this.config.popular;
+    const amount = new BigNumber(params.amount);
+
+    // Retrieve token details for input and output tokens
+    const tokenIn = await this.findToken(from);
+    const tokenOut = await this.findToken(to);
+
+    // Convert the input amount to Wei
+    let amountInWei = `0x${new BigNumber(amount)
+      .multipliedBy(new BigNumber(Math.pow(10, tokenIn.decimals || 18)))
+      .toString(16)}`;
+
+    //Adjust the input amount if a fee is applicable
+    if (this.getFeeDirect(tokenIn.address, tokenOut.address) === 0) {
+      amountInWei = `0x${new BigNumber(amountInWei)
+        .minus(this.getFeeWithAmountIn(tokenOut.address, amountInWei, fee)?.feeAmount ?? 0)
+        .toString(16)}`;
+    }
+
+    // Fetch the best rate for the swapFetch the best rate for the swap
+    const url = `https://routing.capybera.xyz/wrapper/zerox/allowance-holder/quote`;
+    const body = {
+      sellToken: tokenIn.address,
+      buyToken: tokenOut.address,
+      sellAmount: new BigNumber(amount).multipliedBy(new BigNumber(Math.pow(10, tokenIn.decimals || 18))).toFixed(),
+      taker: this.config.spender,
+    };
+    // console.log(47, url);
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json()) as Quote0xResponse;
+
+    const amountOut = new BigNumber(data.buyAmount);
+
+    let feeOut = new BigNumber(0);
+    if (this.getFeeDirect(tokenIn.address, tokenOut.address) === 1) {
+      feeOut = new BigNumber(this.getFeeWithAmountOut(`0x${amountOut.toString(16)}`, fee)?.feeAmount ?? "0");
+    }
+
+    // Validate slippage to ensure it is within a safe range (0% to 100%)
+    if (slippage < 0 || slippage > 100) {
+      throw new Error("Invalid slippage value. It must be between 0 and 100.");
+    }
+
+    // Calculate the minimum output amount after slippage and fees
+    const amountOutMin = amountOut
+      .multipliedBy(new BigNumber(1).minus(Number(slippage) / 10000))
+      .integerValue(BigNumber.ROUND_DOWN)
+      .minus(feeOut);
+
+    let ppx: ethers.PopulatedTransaction = {
+      data: data.transaction.data,
+      to: data.transaction.to,
+      value: this.isNativeToken(tokenIn.address) ? ethers.BigNumber.from(amountInWei) : ethers.BigNumber.from(0),
+    };
+
+    // rateSwap = amountIn / (amountOut / 10^decimals)
+    const rateSwap = amount //
+      .dividedBy(amountOut)
+      .multipliedBy(10 ** tokenOut.decimals);
+
+    let rateTokenIn = await this.quoter.simple(
+      this.isNativeToken(tokenIn.address) ? weth : tokenIn.address,
+      this.config.stableCoins[0]
+    );
+    if (tokenIn.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
+      rateTokenIn = {
+        best: "1",
+        all: [],
+      };
+    }
+
+    let rateTokenOut = await this.quoter.simple(
+      this.isNativeToken(tokenOut.address) ? weth : tokenOut.address,
+      this.config.stableCoins[0]
+    );
+    if (tokenOut.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
+      rateTokenOut = {
+        best: "1",
+        all: [],
+      };
+    }
+
+    const minmumReceived = amountOutMin.div(Math.pow(10, tokenOut.decimals));
+
+    const amountInUsd = amount.multipliedBy(rateTokenIn.best);
+
+    // amountUsd = tokenAmount / 10^decimals * rateUsdPerToken
+    const amountOutUsd = new BigNumber(amountOut).div(10 ** tokenOut.decimals).multipliedBy(rateTokenOut.best);
+
+    // Return the response with calculated values and populated transaction
+    const resp: QuoteResponse = {
+      outAmount: amountOut.div(10 ** tokenOut.decimals).toString(),
+      rateSwap: rateSwap.toString(),
+      amountInUsd: amountInUsd.toString(),
+      populatedTx: ppx,
+      amountOutUsd: amountOutUsd.toString(),
+      minReceived: minmumReceived.toString(),
+      feeAmountOut: `0x${feeOut.toString(16)}`,
+      version: "0x-ver2",
+    };
+
+    return resp;
+  }
 
   /**
    * Fallback function to handle unexpected scenarios or errors during the swap process.
@@ -401,8 +508,9 @@ export class SwapHelper {
    */
   async quote(params: SwapParams): Promise<QuoteResponse> {
     return this.fallback(
-      () => this.uniswapV2(params),
-      () => this.uniswapV3(params)
+      () => this.swap0x(params),
+      () => this.uniswapV3(params),
+      () => this.uniswapV2(params)
     );
   }
 
@@ -565,7 +673,6 @@ export class SwapHelper {
       ],
     };
 
-    console.log(32, rawData);
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 
     return payload;
