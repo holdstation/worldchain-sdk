@@ -385,7 +385,7 @@ export class SwapHelper {
     const body = {
       sellToken: tokenIn.address,
       buyToken: tokenOut.address,
-      sellAmount: new BigNumber(amount).multipliedBy(new BigNumber(Math.pow(10, tokenIn.decimals || 18))).toFixed(),
+      sellAmount: new BigNumber(amountInWei).toFixed(),
       taker: this.config.spender,
     };
     // console.log(47, url);
