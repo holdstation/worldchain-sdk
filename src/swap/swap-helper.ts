@@ -601,6 +601,7 @@ export class SwapHelper {
         },
       ],
     };
+    console.log(604, rawData);
 
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 
@@ -627,6 +628,7 @@ export class SwapHelper {
       ],
     };
 
+    console.log(630, rawData);
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 
     return payload;
@@ -672,6 +674,7 @@ export class SwapHelper {
         },
       ],
     };
+    console.log(676, rawData);
 
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 
