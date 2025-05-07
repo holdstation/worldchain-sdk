@@ -1,0 +1,35 @@
+{
+  "name": "@holdstation/worldchain-viem",
+  "version": "4.0.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsup --minify",
+    "dev": "tsup --watch"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@holdstation/worldchain-sdk": "^4.0.0",
+    "viem": "^2.28.4"
+  },
+  "peerDependencies": {
+    "@holdstation/worldchain-sdk": "^4.0.0",
+    "viem": "^2.28.4"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "semi": false,
+    "printWidth": 120
+  }
+}
