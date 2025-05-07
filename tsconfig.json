@@ -1,6 +1,5 @@
 {
-  "include": ["src"],
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts", "example", "jest.config.ts"],
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
@@ -11,6 +10,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": ".",
+    "resolveJsonModule": true
   }
 }

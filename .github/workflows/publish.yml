@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish:
-    name: Publish npm package
+    name: Publish npm packages
     runs-on: ubuntu-latest
 
     steps:
@@ -17,18 +17,35 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '23'  # Node 23 is not stable yet; use LTS
+          node-version: '20'  # Using LTS version
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build project
-        run: yarn build
+      - name: Build packages
+        run: yarn workspaces run build
+        # This will build all packages in the workspace in the correct dependency order
+        # If any package build fails, the whole workflow will fail
 
-      - name: Create .npmrc with auth token
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      - name: Publish packages
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          # Loop through each package in packages directory
+          for dir in packages/*; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Publishing $dir"
+              cd $dir
+              # Check if the package is private
+              IS_PRIVATE=$(node -p "require('./package.json').private")
+              if [ "$IS_PRIVATE" != "true" ]; then
+                npm publish --access public
+                echo "✅ Published $dir"
+              else
+                echo "⏭️ Skipping private package $dir"
+              fi
+              cd ../../
+            fi
+          done
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to npm
-        run: npm publish
