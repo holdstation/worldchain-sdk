@@ -1,21 +1,10 @@
 {
   "name": "@holdstation/worldchain",
   "version": "4.0.2",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/holdstation/worldchain-sdk.git"
-  },
-  "bugs": {
-    "url": "https://github.com/holdstation/worldchain-sdk/issues"
-  },
-  "homepage": "https://github.com/holdstation/worldchain-sdk/blob/main/README.MD",
   "scripts": {
     "build": "npx yarn-workspaces-foreach -pt \"yarn run build\"",
     "bump:minor": "node scripts/bump.js minor",
@@ -41,9 +30,6 @@
     "tsup": "^8.4.0",
     "typescript": "^5.8.3",
     "yarn-workspaces-foreach": "^0.2.0"
-  },
-  "peerDependencies": {
-    "@worldcoin/minikit-js": "^1.8.0"
   },
   "prettier": {
     "printWidth": 120
