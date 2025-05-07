@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/holdstation/worldchain-sdk/blob/main/README.MD",
   "scripts": {
-    "build": "yarn workspaces run build",
+    "build": "npx yarn-workspaces-foreach -pt \"yarn run build\"",
     "bump:minor": "node scripts/bump.js minor",
     "bump:patch": "node scripts/bump.js patch",
     "bump:major": "node scripts/bump.js major"
@@ -39,7 +39,8 @@
     "ts-jest": "^29.3.1",
     "ts-node": "^10.9.2",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "yarn-workspaces-foreach": "^0.2.0"
   },
   "peerDependencies": {
     "@worldcoin/minikit-js": "^1.8.0"
