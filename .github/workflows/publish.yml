@@ -24,7 +24,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build packages
-        run: yarn workspaces run build
+        run: yarn build
         # This will build all packages in the workspace in the correct dependency order
         # If any package build fails, the whole workflow will fail
 
