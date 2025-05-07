@@ -1,12 +1,12 @@
 {
   "name": "@holdstation/worldchain",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "npx yarn-workspaces-foreach -pt \"yarn run build\"",
+    "build": "npx yarn-workspaces-foreach -ptj 2 \"yarn run build\"",
     "bump:minor": "node scripts/bump.js minor",
     "bump:patch": "node scripts/bump.js patch",
     "bump:major": "node scripts/bump.js major"
