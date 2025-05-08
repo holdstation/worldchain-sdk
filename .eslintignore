@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.yarn/
+example/
+tests/
+jest.config.ts
+tsup.config.*
+abi/
