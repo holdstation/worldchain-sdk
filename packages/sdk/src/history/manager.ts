@@ -1,4 +1,5 @@
 import { Mutex } from "async-mutex";
+import { BigNumber } from "bignumber.js";
 import { Client } from "../client";
 import { config } from "../config";
 import {
