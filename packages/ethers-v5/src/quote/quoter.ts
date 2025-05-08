@@ -1,5 +1,4 @@
-import { viewQuoterv3ABI } from "@holdstation/worldchain-sdk/src/abi/view-quoter-v3";
-import { TokenProvider } from "@holdstation/worldchain-sdk/src/token";
+import { TokenProvider, abi } from "@holdstation/worldchain-sdk";
 import { Percent, Token, TradeType } from "@uniswap/sdk-core";
 import { AlphaRouter, SwapRoute, SwapType, parseAmount } from "@uniswap/smart-order-router";
 import { UniversalRouterVersion } from "@uniswap/universal-router-sdk";
@@ -81,7 +80,7 @@ export class Quoter {
     const calls = feeAmounts.map((fee) => ({
       target: this.quoterV3Address,
       allowFailure: true,
-      callData: this.client.codec(viewQuoterv3ABI).encodeFunctionData("quoteExactInputSingle", [
+      callData: this.client.codec(abi.viewQuoterv3ABI).encodeFunctionData("quoteExactInputSingle", [
         {
           tokenIn,
           tokenOut,
@@ -108,7 +107,7 @@ export class Quoter {
       }
 
       const decoded = this.client
-        .codec(viewQuoterv3ABI)
+        .codec(abi.viewQuoterv3ABI)
         .decodeFunctionResult("quoteExactInputSingle", result.returnData);
 
       const amountReceived = ethers.BigNumber.from(decoded[0]);

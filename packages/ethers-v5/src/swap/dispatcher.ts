@@ -1,4 +1,4 @@
-import { Client } from "@holdstation/worldchain-sdk/src/client";
+import { Client } from "..";
 import { EstimatedData, Estimator, OverrideParams, SwapParams, Swapper, Writer } from "./types";
 
 export class Dispatcher implements Writer {

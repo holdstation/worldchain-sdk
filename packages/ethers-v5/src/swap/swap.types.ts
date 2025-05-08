@@ -1,4 +1,4 @@
-import { Token, TokenStorage } from "@holdstation/worldchain-sdk/src/storage";
+import { Token, TokenStorage } from "@holdstation/worldchain-sdk";
 
 export type SwapConfig = {
   popular: {
