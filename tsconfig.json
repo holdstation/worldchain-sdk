@@ -1,5 +1,5 @@
 {
-  "exclude": ["**/*.test.ts", "example", "jest.config.ts"],
+  "exclude": ["**/*.test.ts", "example", "jest.config.ts", "dist", "node_modules"],
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
@@ -11,6 +11,9 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "rootDir": ".",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
   }
 }
