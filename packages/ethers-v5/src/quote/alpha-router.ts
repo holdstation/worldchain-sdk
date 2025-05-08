@@ -68,7 +68,7 @@ export function initializeAlphaRouter(provider: ethers.providers.JsonRpcProvider
   const tokenPropertiesProvider = new TokenPropertiesProvider(
     chainId,
     new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
-    tokenFeeFetcher
+    tokenFeeFetcher,
   );
 
   const multicall2Provider = new UniswapMulticallProvider(chainId, provider);
@@ -76,12 +76,12 @@ export function initializeAlphaRouter(provider: ethers.providers.JsonRpcProvider
   const v3PoolProvider = new CachingV3PoolProvider(
     chainId,
     new V3PoolProvider(chainId, multicall2Provider),
-    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
   );
   const v4PoolProvider = new CachingV4PoolProvider(
     chainId,
     new V4PoolProvider(chainId, multicall2Provider),
-    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
   );
 
   const alphaRouter = new AlphaRouter({

@@ -43,7 +43,10 @@ export class Quoter {
   private readonly multicall3: Multicall3;
   private softcache: Record<string, { data: { quote: string; raw: SwapRoute }; createdAt: number }> = {};
 
-  constructor(private readonly client: Client, options?: Partial<Options>) {
+  constructor(
+    private readonly client: Client,
+    options?: Partial<Options>,
+  ) {
     // default fallback to usdc.e
     this.stableToken = options?.stableToken || "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
     this.quoterV3Address = options?.viewQuoterv3 || "0x70a6c708c07a8f309d345cf8edb959e5f805d79f";
@@ -169,7 +172,7 @@ export class Quoter {
       destinationAddress,
       details[destinationAddress].decimals,
       details[destinationAddress].symbol,
-      details[destinationAddress].name
+      details[destinationAddress].name,
     );
 
     const tradeType = TradeType.EXACT_INPUT;
@@ -185,7 +188,7 @@ export class Quoter {
         slippageTolerance,
         deadlineOrPreviousBlockhash: parseDeadline(deadline),
       },
-      ROUTING_CONFIG
+      ROUTING_CONFIG,
     );
 
     if (!swap) {

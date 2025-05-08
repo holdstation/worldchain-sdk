@@ -1,18 +1,29 @@
 {
-  "name": "example-viem",
+  "name": "ethers-v5-example",
   "version": "1.0.0",
-  "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "NODE_OPTIONS='--loader ts-node/esm' node cli.ts",
+    "build": "tsc",
+    "token:detail": "ts-node -e \"require('./functions').getTokenDetail().catch(console.error)\"",
+    "token:info": "ts-node -e \"require('./functions').getTokenInfo().catch(console.error)\"",
+    "quote:simple": "ts-node -e \"require('./functions').getSimpleQuote().catch(console.error)\"",
+    "quote:smart": "ts-node -e \"require('./functions').getSmartQuote().catch(console.error)\"",
+    "swap:estimate": "ts-node -e \"require('./functions').estimateSwap().catch(console.error)\"",
+    "swap:execute": "ts-node -e \"require('./functions').swap().catch(console.error)\""
   },
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Example for @holdstation/worldchain-ethers-v5",
   "devDependencies": {
-    "tsx": "^4.19.4"
+    "@types/inquirer": "^8.2.10",
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@holdstation/worldchain-sdk": "file:../../packages/core",
-    "@holdstation/worldchain-ethers-v5": "file:../../packages/ethers-v5"
+    "@holdstation/worldchain-ethers-v5": "^4.0.6",
+    "@holdstation/worldchain-sdk": "^4.0.6",
+    "ethers": "^5.8.0",
+    "inquirer": "^8.2.5",
+    "ts-node": "^10.9.2"
   }
 }

@@ -61,7 +61,7 @@ export class TokenProvider {
         {
           target: tokenAddress,
           callData: this.client.codec(ERC20_ABI).encodeFunctionData("name"),
-        }
+        },
       );
     }
 
@@ -95,7 +95,7 @@ export class TokenProvider {
       blockPerRequest: number;
       toBlock?: number;
       fromBlock?: number;
-    }
+    },
   ) {
     const blockPerRequest = options?.blockPerRequest ?? 10_000;
     const latestBlock = await this.client.getBlockNumber();
@@ -121,7 +121,7 @@ export class TokenProvider {
         const parsedLogs = logs.map((log) => log.address);
 
         return parsedLogs;
-      })
+      }),
     );
 
     const tokenSet = new Set<string>();
