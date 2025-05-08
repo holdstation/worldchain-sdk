@@ -2,6 +2,7 @@ import { Mutex } from "async-mutex";
 import { BigNumber } from "bignumber.js";
 import { Client } from "../client";
 import { config } from "../config";
+import { logger } from "../logger";
 import {
   inmemoryTokenStorage,
   inmemoryTransactionStorage,
@@ -37,7 +38,7 @@ export class Manager {
         token: TokenStorage;
         tx: TransactionStorage;
       }>;
-    }>
+    }>,
   ) {
     this.client = options?.client ?? config.client;
 
@@ -86,9 +87,9 @@ export class Manager {
             runner
               .run(this.blockToWatch)
               .then(() => {
-                console.debug(`Runner started for ${address}`);
+                logger.debug(`Runner started for ${address}`);
               })
-              .catch((e: any) => console.error(`Error starting runner for ${address}`, e));
+              .catch((e: any) => logger.error(`Error starting runner for ${address}`, e));
           } finally {
             release();
           }
@@ -131,7 +132,7 @@ export class Runner {
         token: TokenStorage;
         tx: TransactionStorage;
       };
-    }
+    },
   ) {
     this.client = options.client;
     this.tokenStorage = options.storage.token;
@@ -145,7 +146,7 @@ export class Runner {
     const minBlock = Math.max(latestBlock, this.lastBlock - blockToWatch); // get first 100_000 block
     this.minBlock = minBlock;
 
-    console.debug("Block", { last: this.lastBlock, min: this.minBlock });
+    logger.debug("Block", { last: this.lastBlock, min: this.minBlock });
 
     // Run in two side
     // from minBlock to minBlock - 10_000
@@ -160,7 +161,7 @@ export class Runner {
   private async loop() {
     while (!this.aborted) {
       if (this.lastBlock < this.minBlock) {
-        console.debug(`MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`);
+        logger.debug(`MinBlock ${this.minBlock} is too far from lastBlock ${this.lastBlock}`);
         return;
       }
 
@@ -171,7 +172,7 @@ export class Runner {
         })
         .catch((e: any) => {
           // This is tricky step to avoid missing data
-          console.error("Error in sideMinBlock", e);
+          logger.error("Error in sideMinBlock", e);
         });
 
       // Delay to avoid rate limit
@@ -193,9 +194,9 @@ export class Runner {
         return await fn();
       } catch (error) {
         attempts++;
-        console.error(`Attempt ${attempts} failed:`, error);
+        logger.error(`Attempt ${attempts} failed:`, error);
         if (attempts >= maxRetries) {
-          console.error(`Failed after ${maxRetries} attempts.`);
+          logger.error(`Failed after ${maxRetries} attempts.`);
           throw error; // Optionally rethrow the error
         }
       }
@@ -210,7 +211,7 @@ export class Runner {
 
     for (let i = to; i >= from; i -= this.blockstep) {
       if (this.aborted) {
-        console.debug("Aborted");
+        logger.debug("Aborted");
         break;
       }
 
@@ -231,12 +232,12 @@ export class Runner {
               topics: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", null, [topicAddress]],
             }),
           ]),
-        3
+        3,
       );
 
       const txsummary: Record<string, TokenTransfer[]> = {};
       const combinedLogs = [...logs[0], ...logs[1]];
-      for (let log of combinedLogs) {
+      for (const log of combinedLogs) {
         if (!txsummary[log.transactionHash]) {
           txsummary[log.transactionHash] = [];
         }
@@ -268,7 +269,7 @@ export class Runner {
         Array.from(Object.keys(txsummary)).map(async (hash) => {
           const txData = await this.client.getTransaction(hash);
           return txData;
-        })
+        }),
       );
 
       const transactions: Transaction[] = [];
@@ -318,7 +319,7 @@ export class Runner {
               })),
             };
           })
-          .filter((tx) => typeof tx !== "undefined")
+          .filter((tx) => typeof tx !== "undefined"),
       );
     }
   }

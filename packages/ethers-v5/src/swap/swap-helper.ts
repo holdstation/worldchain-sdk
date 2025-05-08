@@ -6,6 +6,7 @@ import {
   TokenProvider,
   TokenStorage,
   abi,
+  logger,
 } from "@holdstation/worldchain-sdk";
 import { MiniKit } from "@worldcoin/minikit-js";
 import BigNumber from "bignumber.js";
@@ -46,7 +47,10 @@ export class SwapHelper implements Swapper {
     stableCoins: ["0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"],
   };
 
-  constructor(private readonly client: Client, config?: Partial<SwapConfig>) {
+  constructor(
+    private readonly client: Client,
+    config?: Partial<SwapConfig>,
+  ) {
     const provider = this.client.getProvider();
     const multicall3 = new Multicall3(provider);
     this.tokenProvider = new TokenProvider({ client, multicall3 });
@@ -102,7 +106,7 @@ export class SwapHelper implements Swapper {
     const router = new ethers.Contract(
       this.config.uniswap.router.v2,
       abi.uniswapRouterV2ABI,
-      this.client.getProvider()
+      this.client.getProvider(),
     );
 
     // Get the output amount for the swap
@@ -136,10 +140,10 @@ export class SwapHelper implements Swapper {
         paths,
         this.config.spender,
         Math.floor(Date.now() / 1000) + 60 * 20,
-        { value: amountInWei }
+        { value: amountInWei },
       );
     } else {
-      let fn: ethers.ContractFunction<ethers.PopulatedTransaction> = this.isNativeToken(tokenOut.address)
+      const fn: ethers.ContractFunction<ethers.PopulatedTransaction> = this.isNativeToken(tokenOut.address)
         ? router.populateTransaction.swapExactTokensForETH
         : router.populateTransaction.swapExactTokensForTokens;
 
@@ -148,7 +152,7 @@ export class SwapHelper implements Swapper {
         `0x${amountOutMin.toString(16)}`,
         paths,
         this.config.spender,
-        Math.floor(Date.now() / 1000) + 60 * 20
+        Math.floor(Date.now() / 1000) + 60 * 20,
       );
     }
 
@@ -159,7 +163,7 @@ export class SwapHelper implements Swapper {
 
     let rateTokenOut = await this.quoter.simple(
       this.isNativeToken(tokenOut.address) ? this.config.popular.weth : tokenOut.address,
-      this.config.stableCoins[0]
+      this.config.stableCoins[0],
     );
     if (tokenOut.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
       rateTokenOut = {
@@ -244,7 +248,7 @@ export class SwapHelper implements Swapper {
     const quoterV2 = new ethers.Contract(
       this.config.uniswap.quoter.v2,
       abi.uniswapQuoterV2ABI,
-      this.client.getProvider()
+      this.client.getProvider(),
     );
     const quote = await quoterV2.quoteExactInput(pathsEnconde, amountInWei);
 
@@ -270,7 +274,7 @@ export class SwapHelper implements Swapper {
     const router = new ethers.Contract(
       this.config.uniswap.router.v3,
       abi.uniswapRouterV3ABI,
-      this.client.getProvider()
+      this.client.getProvider(),
     );
 
     let ppx = await router.populateTransaction.exactInputSingle(
@@ -283,7 +287,7 @@ export class SwapHelper implements Swapper {
         amountOutMinimum: `0x${amountOutMin.toString(16)}`,
         sqrtPriceLimitX96: 0,
       },
-      { value: this.isNativeToken(tokenIn.address) ? amountInWei : "0" }
+      { value: this.isNativeToken(tokenIn.address) ? amountInWei : "0" },
     );
 
     if (this.isNativeToken(tokenOut.address)) {
@@ -301,12 +305,12 @@ export class SwapHelper implements Swapper {
 
       const unwrapCalldata = router.interface.encodeFunctionData(
         "unwrapWETH9",
-        [`0x${amountOutMin.toString(16)}`, this.config.spender] // minAmountOut, recipient of ETH
+        [`0x${amountOutMin.toString(16)}`, this.config.spender], // minAmountOut, recipient of ETH
       );
 
       ppx = await router.populateTransaction["multicall(uint256,bytes[])"](
         Math.floor(Date.now() / 1000) + 300, // deadline
-        [exactInputCalldata, unwrapCalldata]
+        [exactInputCalldata, unwrapCalldata],
       );
     }
 
@@ -409,7 +413,7 @@ export class SwapHelper implements Swapper {
       .integerValue(BigNumber.ROUND_DOWN)
       .minus(feeOut);
 
-    let ppx: ethers.PopulatedTransaction = {
+    const ppx: ethers.PopulatedTransaction = {
       data: data.transaction.data,
       to: data.transaction.to,
       value: this.isNativeToken(tokenIn.address) ? ethers.BigNumber.from(amountInWei) : ethers.BigNumber.from(0),
@@ -422,7 +426,7 @@ export class SwapHelper implements Swapper {
 
     let rateTokenOut = await this.quoter.simple(
       this.isNativeToken(tokenOut.address) ? weth : tokenOut.address,
-      this.config.stableCoins[0]
+      this.config.stableCoins[0],
     );
     if (tokenOut.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
       rateTokenOut = {
@@ -461,7 +465,7 @@ export class SwapHelper implements Swapper {
     for (let index = 0; index < args.length; index++) {
       const ele = args[index];
       if (typeof ele !== "function") {
-        console.error("Element is not a valid function");
+        logger.error("Element is not a valid function");
         continue;
       }
 
@@ -492,7 +496,7 @@ export class SwapHelper implements Swapper {
     return this.fallback(
       () => this.swap0x(params),
       () => this.uniswapV3(params),
-      () => this.uniswapV2(params)
+      () => this.uniswapV2(params),
     );
   }
 
@@ -569,7 +573,7 @@ export class SwapHelper implements Swapper {
         },
       ],
     };
-    console.log(604, rawData);
+    logger.log("fillQuoteTokenToToken: ", rawData);
 
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
     if (payload.finalPayload.status !== "success") {
@@ -605,7 +609,7 @@ export class SwapHelper implements Swapper {
       ],
     };
 
-    console.log(630, rawData);
+    logger.log("fillQuoteEthToToken: ", rawData);
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 
     if (payload.finalPayload.status !== "success") {
@@ -662,7 +666,7 @@ export class SwapHelper implements Swapper {
         },
       ],
     };
-    console.log(676, rawData);
+    logger.log("fillQuoteTokenToEth: ", rawData);
 
     const payload = await MiniKit.commandsAsync.sendTransaction(rawData);
 

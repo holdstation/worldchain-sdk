@@ -13,6 +13,14 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended", // This integrates Prettier with ESLint
   ],
+  globals: {
+    setTimeout: "readonly",
+    fetch: "readonly",
+    // other globals you might use
+    clearTimeout: "readonly",
+    setInterval: "readonly",
+    clearInterval: "readonly",
+  },
   rules: {
     // Common rules for the entire workspace
     "prettier/prettier": ["error", {}, { usePrettierrc: true }],

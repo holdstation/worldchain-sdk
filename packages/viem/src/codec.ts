@@ -33,8 +33,6 @@ export class ViemCodec implements AbiCodec {
     // Create a new object with both array-like and named properties
     const resultObj: Record<string | number, any> = {}
 
-    console.log(3333, values)
-
     // Add array indices
     values.forEach((val, i) => {
       resultObj[i] = val

@@ -25,7 +25,7 @@ export class Dispatcher implements Writer {
   }
 
   private async _estimateSwap(params: SwapParams, override?: Partial<OverrideParams>) {
-    let preferredRouters = params.preferRouters || Object.keys(this.swapper);
+    const preferredRouters = params.preferRouters || Object.keys(this.swapper);
     if (preferredRouters.length === 0) {
       throw new Error("No router available");
     }

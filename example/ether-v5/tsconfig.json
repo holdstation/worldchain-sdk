@@ -1,22 +1,31 @@
 {
-	"compilerOptions": {
+  "compilerOptions": {
+    // Treat files as modules even if it doesn't use import/export
+    "moduleDetection": "force",
 
-		// Treat files as modules even if it doesn't use import/export
-		"moduleDetection": "force",
+    // Ignore module structure
 
-		// Ignore module structure
-		"module": "Preserve",
+    // Allow JSON modules to be imported
+    "resolveJsonModule": true,
 
-		// Allow JSON modules to be imported
-		"resolveJsonModule": true,
+    // Allow JS files to be imported from TS and vice versa
+    "allowJs": true,
 
-		// Allow JS files to be imported from TS and vice versa
-		"allowJs": true,
+    // Use correct ESM import behavior
 
-		// Use correct ESM import behavior
-		"esModuleInterop": true,
-
-		// Disallow features that require cross-file awareness
-		"isolatedModules": true,
-	},
+    // Disallow features that require cross-file awareness
+    "isolatedModules": true,
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "include": ["*.ts"]
 }
