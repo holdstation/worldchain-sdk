@@ -32,7 +32,7 @@ export type SendERC20Params = {
 
 export class Sender {
   // Holdstation forwarder address, using for gas free transactions
-  private readonly spender: string = "0x297eea7f0e6216aeed83651804d091b65c3a8e9c";
+  private readonly spender: string = "0x43222f934ea5c593a060a6d46772fdbdc2e2cff0";
 
   private readonly tokenProvider: TokenProvider;
 

@@ -43,7 +43,7 @@ export class SwapHelper implements Swapper {
       },
     },
 
-    spender: "0x297eea7f0e6216aeed83651804d091b65c3a8e9c",
+    spender: "0x43222f934ea5c593a060a6d46772fdbdc2e2cff0",
     stableCoins: ["0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"],
   };
 
