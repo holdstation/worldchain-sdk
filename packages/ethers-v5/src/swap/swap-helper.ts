@@ -11,9 +11,10 @@ import {
 import { MiniKit } from "@worldcoin/minikit-js";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
+import { URLSearchParams } from "url";
 import { Client, Multicall3 } from "..";
 import { Quoter } from "../quote";
-import { Quote0xResponse, SwapConfig } from "./swap.types";
+import { Quote0xResponse, SwapConfig, ZeroXRequestParams } from "./swap.types";
 
 export class SwapHelper implements Swapper {
   private readonly tokenProvider: TokenProvider;
@@ -45,6 +46,7 @@ export class SwapHelper implements Swapper {
 
     spender: "0x43222f934ea5c593a060a6d46772fdbdc2e2cff0",
     stableCoins: ["0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"],
+    tradeSurplusRecipient: "0x8d61d7fe817efc69a2169f0d5f39b41ed5c89409",
   };
 
   constructor(
@@ -350,6 +352,38 @@ export class SwapHelper implements Swapper {
 
     return resp;
   }
+
+  private async zeroXRequest(data: ZeroXRequestParams): Promise<Quote0xResponse> {
+    // Build query parameters string
+    const url = `https://bridge.holdstation.com/0x/swap/allowance-holder/quote`;
+
+    const queryParams = new URLSearchParams();
+
+    // Add all parameters from the data object
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    // Make the fetch request
+    const response = await fetch(`${url}?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "X-Bridge-Purpose": "worldchain-app",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.status < 200 || response.status >= 400) {
+      throw new Error(`${response.status}`);
+    }
+
+    const result = await response.json();
+    // Parse and return the JSON response
+    return result as Quote0xResponse;
+  }
+
   private async swap0x(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
     const { tokenIn: from, tokenOut: to, fee: feeRaw = "0.2", slippage: slippageRaw = "3" } = params;
     const { weth } = this.config.popular;
@@ -376,35 +410,28 @@ export class SwapHelper implements Swapper {
         .toString(16)}`;
     }
 
-    // Fetch the best rate for the swapFetch the best rate for the swap
-    const url = `https://routing.capybera.xyz/wrapper/zerox/allowance-holder/quote`;
-    const body = {
+    const slippage = parseFloat(slippageRaw);
+    // Validate slippage to ensure it is within a safe range (0% to 100%)
+    if (isNaN(slippage) || slippage < 0 || slippage > 100) {
+      throw new Error("Invalid slippage value. It must be between 0 and 100.");
+    }
+
+    // console.log(47, url);
+    const data = await this.zeroXRequest({
+      chainId: 480,
       sellToken: tokenIn.address,
       buyToken: tokenOut.address,
       sellAmount: new BigNumber(amountInWei).toFixed(),
       taker: this.config.spender,
-    };
-    // console.log(47, url);
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      body: JSON.stringify(body),
+      slippageBps: slippage * 100, // 0 - > 1000 : 0% - > 10%
+      tradeSurplusRecipient: this.config.tradeSurplusRecipient,
     });
-    const data = (await res.json()) as Quote0xResponse;
 
     const amountOut = new BigNumber(data.buyAmount);
 
     let feeOut = new BigNumber(0);
     if (this.getFeeDirect(tokenIn.address, tokenOut.address) === 1) {
       feeOut = new BigNumber(this.getFeeWithAmountOut(`0x${amountOut.toString(16)}`, fee)?.feeAmount ?? "0");
-    }
-
-    const slippage = parseFloat(slippageRaw);
-    // Validate slippage to ensure it is within a safe range (0% to 100%)
-    if (isNaN(slippage) || slippage < 0 || slippage > 100) {
-      throw new Error("Invalid slippage value. It must be between 0 and 100.");
     }
 
     // Calculate the minimum output amount after slippage and fees

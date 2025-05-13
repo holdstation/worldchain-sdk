@@ -22,7 +22,23 @@ export type SwapConfig = {
   spender: string;
 
   tokenStorage?: TokenStorage;
+
+  tradeSurplusRecipient?: string;
 };
+
+export interface ZeroXRequestParams {
+  chainId: number;
+  sellToken: string;
+  buyToken: string;
+  sellAmount: string; // Hoặc number, tuỳ thuộc vào dữ liệu thực tế
+  taker: string;
+  swapFeeRecipient?: string;
+  swapFeeBps?: number; // 0 - > 1000 : 0% - > 10%
+  swapFeeToken?: string;
+  tradeSurplusRecipient?: string;
+  slippageBps?: number; // 0 - > 1000 : 0% - > 10%
+  gasPrice?: string;
+}
 
 export type Quote0xResponse = {
   blockNumber: string;

@@ -1,6 +1,6 @@
 {
   "name": "@holdstation/worldchain-viem",
-  "version": "4.0.8",
+  "version": "4.0.9",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -18,11 +18,11 @@
   "license": "MIT",
   "description": "",
   "devDependencies": {
-    "@holdstation/worldchain-sdk": "^4.0.8",
+    "@holdstation/worldchain-sdk": "^4.0.9",
     "viem": "^2.28.4"
   },
   "peerDependencies": {
-    "@holdstation/worldchain-sdk": "^4.0.8",
+    "@holdstation/worldchain-sdk": "^4.0.9",
     "viem": "^2.28.4"
   },
   "prettier": {
