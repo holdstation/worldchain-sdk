@@ -74,7 +74,7 @@ export async function estimateSwap() {
     fee: "0.2",
   };
 
-  const result = await swapHelper.quote(params);
+  const result = await swapHelper.estimate.quote(params);
   console.log("Swap estimate result:", result);
   return result;
 }
@@ -89,7 +89,7 @@ export async function swap() {
     fee: "0.2",
   };
 
-  const quoteResponse = await swapHelper.quote(params);
+  const quoteResponse = await swapHelper.estimate.quote(params);
   const swapParams: SwapParams["input"] = {
     tokenIn: "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
     tokenOut: "0x4200000000000000000000000000000000000006",
