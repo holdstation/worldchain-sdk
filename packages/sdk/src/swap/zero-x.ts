@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js";
-import { ethers } from "ethers";
 import { URLSearchParams } from "url";
 import { Token, TokenStorage } from "../storage";
 import { getBestTokenPriceUSD, TokenProvider } from "../token";
@@ -113,12 +112,6 @@ export class ZeroX implements SwapModule {
       .integerValue(BigNumber.ROUND_DOWN)
       .minus(feeOut);
 
-    const ppx: ethers.PopulatedTransaction = {
-      data: data.transaction.data,
-      to: data.transaction.to,
-      value: isNativeToken(tokenIn.address) ? ethers.BigNumber.from(amountInWei) : ethers.BigNumber.from(0),
-    };
-
     // rateSwap = amountIn / (amountOut / 10^decimals)
     const rateSwap = amount //
       .dividedBy(amountOut)
@@ -133,9 +126,9 @@ export class ZeroX implements SwapModule {
 
     // Return the response with calculated values and populated transaction
     const resp: SwapParams["quoteOutput"] = {
-      data: ppx.data ?? "",
-      value: ppx.value?.toHexString() ?? "0",
-      to: ppx.to ?? "",
+      data: data.transaction.data ?? "",
+      value: isNativeToken(tokenIn.address) ? amountInWei.toFixed() : "0",
+      to: data.transaction.to ?? "",
       addons: {
         outAmount: amountOut.div(10 ** tokenOut.decimals).toString(),
         rateSwap: rateSwap.toString(),
