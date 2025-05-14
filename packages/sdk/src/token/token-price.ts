@@ -33,7 +33,7 @@ interface TokenData {
 }
 
 /**
- * Fetches token data from the Uniswap V3 WorldChain subgraph
+ * Fetches token data from the Uniswap V3, V4 WorldChain subgraph
  * @param tokenId The token address to query
  * @returns The GraphQL response with token data
  */
@@ -81,7 +81,7 @@ export async function fetchTokenData(tokenId: string, version: string) {
         "Content-Type": "application/json",
         Accept: "application/graphql-response+json, application/json",
         Origin: "https://graph.capybera.xyz",
-        Referer: "https://graph.capybera.xyz/subgraphs/name/uniswap-v3-worldchain-mainnet/graphql",
+        Referer: `https://graph.capybera.xyz/subgraphs/name/uniswap-${version}-worldchain-mainnet/graphql`,
       },
       body: JSON.stringify({
         query,
@@ -132,21 +132,19 @@ export async function getTokenPriceUSD(tokenId: string, version: string): Promis
       const token1DerivedETH = parseFloat(pool.token1.derivedETH || "0");
       const ethPriceUSD = parseFloat(bundle?.ethPriceUSD || "0");
 
-      const token0PriceUSD = token0DerivedETH * ethPriceUSD * token0Price;
-      const token1PriceUSD = token1DerivedETH * ethPriceUSD * token1Price;
+      const token0PriceUSD = token0DerivedETH * ethPriceUSD;
+      const token1PriceUSD = token1DerivedETH * ethPriceUSD;
       if (pool.token0.id.toLowerCase() === tokenId.toLowerCase()) {
         if (token0PriceUSD > 0) {
           return token0PriceUSD;
         }
-
-        return token1PriceUSD * token0Price;
+        return token1PriceUSD * token1Price;
       }
 
       if (token1PriceUSD > 0) {
         return token1PriceUSD;
       }
-
-      return token0PriceUSD * token1Price;
+      return token0PriceUSD * token0Price;
     }
 
     return 0;
@@ -166,7 +164,6 @@ export async function getBestTokenPriceUSD(tokenId: string): Promise<number> {
 
     const v3Price = priceV3.status === "fulfilled" ? priceV3.value : 0;
     const v4Price = priceV4.status === "fulfilled" ? priceV4.value : 0;
-
     return Math.max(v3Price, v4Price);
   } catch (error) {
     logger.error(`Failed to get best USD price for token ${tokenId}:`, error);
