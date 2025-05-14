@@ -1,31 +1,3 @@
-import { Token, TokenStorage } from "@holdstation/worldchain-sdk";
-
-export type SwapConfig = {
-  popular: {
-    weth: string;
-    wld: string;
-    eth: Token;
-  };
-
-  uniswap: {
-    router: {
-      v2: string;
-      v3: string;
-    };
-    quoter: {
-      v2: string;
-    };
-  };
-
-  stableCoins: string[];
-
-  spender: string;
-
-  tokenStorage?: TokenStorage;
-
-  tradeSurplusRecipient?: string;
-};
-
 export interface ZeroXRequestParams {
   chainId: number;
   sellToken: string;
@@ -40,7 +12,7 @@ export interface ZeroXRequestParams {
   gasPrice?: string;
 }
 
-export type Quote0xResponse = {
+export type ZeroXResponse = {
   blockNumber: string;
   buyAmount: string;
   buyToken: string;

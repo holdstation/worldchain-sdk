@@ -351,15 +351,11 @@
     "@ethersproject/properties" "^5.8.0"
     "@ethersproject/strings" "^5.8.0"
 
-"@holdstation/worldchain-ethers-v5@^4.0.6":
-  version "4.0.6"
-  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-ethers-v5/-/worldchain-ethers-v5-4.0.6.tgz#46e18d4725cd078fb8a36a1b2091035fd331970f"
-  integrity sha512-mw1CDeaL2CH1F+ug5jWw0UKEF/KiILCju8YyDdAI4ybOX5pDXKv9sxkmd6iqTWrE4WZinC22GRBV5fhN+cP6Qw==
+"@holdstation/worldchain-ethers-v5@file:../../packages/ethers-v5":
+  version "4.0.9"
 
-"@holdstation/worldchain-sdk@^4.0.6":
-  version "4.0.6"
-  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-sdk/-/worldchain-sdk-4.0.6.tgz#9233157a5fc26ee41c1035fbbb6ccab65f3d3844"
-  integrity sha512-y+r+yUny4eBFo3/wreC8IHtT3B4d55RvKqaD+J0IPWUTgrsJddY5jom9HE9/uV1hJ7+8/hi6j22QrF/5mcNltQ==
+"@holdstation/worldchain-sdk@file:../../packages/core":
+  version "0.0.0"
 
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.1.2"

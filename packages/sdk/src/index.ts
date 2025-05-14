@@ -11,4 +11,5 @@ export * from "./multicall";
 export * from "./send";
 export * from "./storage";
 export * from "./swap";
+export * from "./swap/swap";
 export * from "./token";

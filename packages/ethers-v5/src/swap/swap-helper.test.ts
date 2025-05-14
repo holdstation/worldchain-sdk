@@ -1,7 +1,6 @@
-import { config, SwapParams, Swapper } from "@holdstation/worldchain-sdk";
+import { config, inmemoryTokenStorage, SwapParams, Swapper } from "@holdstation/worldchain-sdk";
 import { ethers } from "ethers";
 import { Client, Multicall3, SwapHelper } from "..";
-import { inmemoryTokenStorage } from "./../../../sdk/src/storage/token.storage.inmemory";
 
 describe("SwapHelper - quote", () => {
   let swapHelper: Swapper;
@@ -54,7 +53,7 @@ describe("SwapHelper - quote", () => {
       fee: "0",
     };
 
-    const result = await swapHelper.quote(params);
+    const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
   }, 30000);
 
@@ -67,7 +66,7 @@ describe("SwapHelper - quote", () => {
       fee: "0",
     };
 
-    const result = await swapHelper.quote(params);
+    const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
   }, 30000);
 
@@ -80,7 +79,7 @@ describe("SwapHelper - quote", () => {
       fee: "0",
     };
 
-    const result = await swapHelper.quote(params);
+    const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
   }, 30000);
 
@@ -93,7 +92,7 @@ describe("SwapHelper - quote", () => {
       fee: "0.2",
     };
 
-    const result = await swapHelper.quote(params);
+    const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
   }, 30000);
 
@@ -101,12 +100,14 @@ describe("SwapHelper - quote", () => {
     const params: SwapParams["quoteInput"] = {
       tokenIn: "0x2cFc85d8E48F8EAB294be644d9E25C3030863003", // Token A
       tokenOut: "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1", // Token B
-      amountIn: "1",
+      amountIn: "1000",
       slippage: "0.3",
       fee: "0.2",
+      preferRouters: ["0x"],
     };
 
-    const result = await swapHelper.quote(params);
+    const result = await swapHelper.estimate.quote(params);
+    console.debug("Result:", result);
     validateQuoteResult(result);
   }, 30000);
 
@@ -120,8 +121,8 @@ describe("SwapHelper - quote", () => {
     };
 
     // Call the function and expect it to throw an error
-    await expect(swapHelper.quote(params)).rejects.toThrowError(
-      "Invalid slippage value. It must be between 0 and 100."
+    await expect(swapHelper.estimate.quote(params)).rejects.toThrowError(
+      "Invalid slippage value. It must be between 0 and 100.",
     );
   }, 30000);
 });

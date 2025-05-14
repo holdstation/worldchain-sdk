@@ -10,14 +10,13 @@ import {
   Token,
   TokenProvider,
   TokenStorage,
-  uniswapQuoterV2ABI,
-  uniswapRouterV3ABI,
+  uniswapRouterV2ABI,
 } from "@holdstation/worldchain-sdk";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { Quoter } from "../quote";
 
-export class UniswapV3 implements SwapModule {
+export class UniswapV2 implements SwapModule {
   private config: SwapConfig = defaultWorldchainConfig;
 
   constructor(
@@ -32,7 +31,7 @@ export class UniswapV3 implements SwapModule {
   }
 
   name(): string {
-    return "uniswap-v3";
+    return "uniswap-v2";
   }
 
   enabled(chainId: number): boolean {
@@ -40,60 +39,55 @@ export class UniswapV3 implements SwapModule {
   }
 
   async estimate(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
-    // Placeholder for actual Uniswap V3 swap estimation logic
-    const { tokenIn: fromToken, tokenOut: toToken, fee: rawFee = "0.2", slippage: rawSlippage = "3" } = params;
     const { weth } = this.config.tokens;
+    const { tokenIn: fromToken, tokenOut: toToken, fee: rawFee = "0.2", slippage: rawSlippage = "3" } = params;
 
     const amount = new BigNumber(params.amountIn);
 
-    // Retrieve token details for input and output tokens
+    // Find token details for input and output tokens
     const tokenIn = await this.findToken(fromToken);
     const tokenOut = await this.findToken(toToken);
 
-    // Convert the input amount to Wei
-    let amountInWei = new BigNumber(amount).multipliedBy(10 ** tokenIn.decimals || 18);
+    // Convert the input amount to Wei (smallest unit of the token)
+    let amountInWei = new BigNumber(amount).multipliedBy(new BigNumber(10 ** tokenIn.decimals));
 
     const fee = parseFloat(rawFee);
     if (isNaN(fee)) {
       throw new Error(`Invalid fee value: ${rawFee}`);
     }
 
-    //Adjust the input amount if a fee is applicable
+    // Adjust the input amount if there is a fee
     if (
       getFeeDirect(tokenIn.address, tokenOut.address, this.config.stableCoins, this.config.tokens.wld.address) === 0
     ) {
       amountInWei = amountInWei.minus(getFeeWithAmountIn(tokenOut.address, amountInWei, fee)?.feeAmount ?? 0);
     }
 
-    // Determine the swap path and pool tokens
-    let paths: string[] = [tokenIn.address, tokenOut.address];
-    let tokenInPool = tokenIn.address;
-    let tokenOutPool = tokenOut.address;
-    if (isNativeToken(tokenOut.address)) {
-      paths = [tokenIn.address, weth.address];
-      tokenOutPool = weth.address;
-    }
-
+    // Determine the swap path based on token types
+    let paths: string[] = [tokenIn.address, weth.address, tokenOut.address];
     if (isNativeToken(tokenIn.address)) {
       paths = [weth.address, tokenOut.address];
-      tokenInPool = weth.address;
     }
 
-    // Fetch the best rate for the swapFetch the best rate for the swap
-    const rate = await this.quoter.simple(tokenInPool, tokenOutPool);
-    const bestRate = rate.all
-      .filter((r) => r.rate > 0)
-      .reduce((prev, curr) => (ethers.BigNumber.from(curr.rate).gt(prev.rate) ? curr : prev), rate.all[0]);
+    if (isNativeToken(tokenOut.address)) {
+      paths = [tokenIn.address, weth.address];
+    }
 
-    // Encode the swap path for Uniswap V3
-    const pathsEnconde = this.encodePath(paths, Number(bestRate.fee));
+    if (
+      tokenIn.address.toLowerCase() === weth.address.toLowerCase() ||
+      tokenOut.address.toLowerCase() === weth.address.toLowerCase()
+    ) {
+      paths = [tokenIn.address, tokenOut.address];
+    }
+
+    // Initialize the Uniswap V2 router contract
+    const router = new ethers.Contract(this.config.uniswap.router.v2, uniswapRouterV2ABI, this.provider);
 
     // Get the output amount for the swap
-    const quoterV2 = new ethers.Contract(this.config.uniswap.quoter.v2, uniswapQuoterV2ABI, this.provider);
-    const quote = await quoterV2.quoteExactInput(pathsEnconde, amountInWei.toFixed());
+    const amountsOut = await router.getAmountsOut(`0x${amountInWei.toString(16)}`, paths);
+    const amountOut: ethers.BigNumber = amountsOut[amountsOut.length - 1];
 
-    const amountOut = quote[0];
-
+    // Calculate the fee for the output amount if applicable
     let feeOut = new BigNumber(0);
     if (
       getFeeDirect(tokenIn.address, tokenOut.address, this.config.stableCoins, this.config.tokens.wld.address) === 1
@@ -109,46 +103,32 @@ export class UniswapV3 implements SwapModule {
 
     // Calculate the minimum output amount after slippage and fees
     const amountOutMin = new BigNumber(amountOut.toHexString())
-      .multipliedBy(new BigNumber(1).minus(Number(slippage) / 10000))
+      .multipliedBy(new BigNumber(1).minus(Number(slippage) / 100))
       .integerValue(BigNumber.ROUND_DOWN)
       .minus(feeOut);
 
-    const router = new ethers.Contract(this.config.uniswap.router.v3, uniswapRouterV3ABI, this.provider);
+    let ppx: ethers.PopulatedTransaction;
 
-    let ppx = await router.populateTransaction.exactInputSingle(
-      {
-        tokenIn: tokenInPool,
-        tokenOut: tokenOutPool,
-        fee: Number(bestRate.fee),
-        recipient: this.config.spender,
-        amountIn: amountInWei.toFixed(),
-        amountOutMinimum: `0x${amountOutMin.toString(16)}`,
-        sqrtPriceLimitX96: 0,
-      },
-      { value: isNativeToken(tokenIn.address) ? amountInWei.toFixed() : "0" },
-    );
-
-    if (isNativeToken(tokenOut.address)) {
-      const exactInputCalldata = router.interface.encodeFunctionData("exactInputSingle", [
-        {
-          tokenIn: tokenInPool,
-          tokenOut: tokenOutPool,
-          fee: Number(bestRate.fee),
-          recipient: this.config.uniswap.router.v3,
-          amountIn: amountInWei.toFixed(),
-          amountOutMinimum: `0x${amountOutMin.toString(16)}`,
-          sqrtPriceLimitX96: 0,
-        },
-      ]);
-
-      const unwrapCalldata = router.interface.encodeFunctionData(
-        "unwrapWETH9",
-        [`0x${amountOutMin.toString(16)}`, this.config.spender], // minAmountOut, recipient of ETH
+    // Populate the transaction based on token types
+    if (isNativeToken(tokenIn.address)) {
+      ppx = await router.populateTransaction.swapExactETHForTokens(
+        `0x${amountOutMin.toString(16)}`,
+        paths,
+        this.config.spender,
+        Math.floor(Date.now() / 1000) + 60 * 20,
+        { value: `0x${amountInWei.toString(16)}` },
       );
+    } else {
+      const fn: ethers.ContractFunction<ethers.PopulatedTransaction> = isNativeToken(tokenOut.address)
+        ? router.populateTransaction.swapExactTokensForETH
+        : router.populateTransaction.swapExactTokensForTokens;
 
-      ppx = await router.populateTransaction["multicall(uint256,bytes[])"](
-        Math.floor(Date.now() / 1000) + 300, // deadline
-        [exactInputCalldata, unwrapCalldata],
+      ppx = await fn(
+        `0x${amountInWei.toString(16)}`,
+        `0x${amountOutMin.toString(16)}`,
+        paths,
+        this.config.spender,
+        Math.floor(Date.now() / 1000) + 60 * 20,
       );
     }
 
@@ -157,7 +137,10 @@ export class UniswapV3 implements SwapModule {
       .dividedBy(new BigNumber(amountOut.toHexString()))
       .multipliedBy(10 ** tokenOut.decimals);
 
-    let rateTokenOut = await this.quoter.simple(tokenOutPool, this.config.stableCoins[0]);
+    let rateTokenOut = await this.quoter.simple(
+      isNativeToken(tokenOut.address) ? weth.address : tokenOut.address,
+      this.config.stableCoins[0],
+    );
     if (tokenOut.address.toLowerCase() === this.config.stableCoins[0].toLowerCase()) {
       rateTokenOut = {
         best: "1",
@@ -208,25 +191,5 @@ export class UniswapV3 implements SwapModule {
     }
 
     return token;
-  }
-
-  /**
-   * Encodes the swap path for Uniswap V3.
-   *
-   * The path includes a sequence of token addresses and pool fees, which are used to define the route
-   * for the swap. The encoded path is required for Uniswap V3's `exactInput` and `exactOutput` functions.
-   *
-   * @param tokens - An array of token addresses representing the swap path.
-   * @param fee - The fee tier (e.g., 500, 3000, 10000) for the Uniswap V3 pool between each token pair.
-   * @returns A hex-encoded string representing the swap path.
-   */
-  private encodePath(tokens: string[], fee: number) {
-    const encoded = [];
-    for (let i = 0; i < tokens.length - 1; i++) {
-      encoded.push(tokens[i].toLowerCase().slice(2)); // remove 0x
-      encoded.push(fee.toString(16).padStart(6, "0"));
-    }
-    encoded.push(tokens[tokens.length - 1].toLowerCase().slice(2));
-    return "0x" + encoded.join("");
   }
 }
