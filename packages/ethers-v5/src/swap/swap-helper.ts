@@ -171,7 +171,7 @@ export class SwapHelper implements Swapper {
             feeReceiver,
             [permitTransfer.nonce, permitTransfer.deadline, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           ],
-          value: "0x",
+          value: "0x0",
         },
       ],
       permit2: [
@@ -264,7 +264,7 @@ export class SwapHelper implements Swapper {
             feeReceiver,
             [permitTransfer.nonce, permitTransfer.deadline, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           ],
-          value: "0x",
+          value: "0x0",
         },
       ],
       permit2: [
