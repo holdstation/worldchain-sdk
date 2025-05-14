@@ -20,14 +20,10 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { Client, Multicall3 } from "..";
-import { Quoter } from "../quote";
-import { UniswapV2 } from "./uniswap-v2";
-import { UniswapV3 } from "./uniswap-v3";
 
 export class SwapHelper implements Swapper {
   private modules: Record<string, SwapModule> = {};
   private readonly tokenProvider: TokenProvider;
-  private quoter: Quoter;
   private tokenStorage: TokenStorage;
   estimate: Estimator;
 
@@ -45,17 +41,12 @@ export class SwapHelper implements Swapper {
     const provider = this.client.getProvider();
     const multicall3 = new Multicall3(provider);
     this.tokenProvider = new TokenProvider({ client, multicall3 });
-    this.quoter = new Quoter(this.client);
     this.tokenStorage = config?.tokenStorage ?? new IdbTokenStorage("TokenDB");
     this.config = Object.assign(this.config, config ?? {});
 
     const zeroX = new ZeroX(this.tokenProvider, this.tokenStorage, this.config);
-    const uniSwapV2 = new UniswapV2(provider, this.quoter, this.tokenProvider, this.tokenStorage, this.config);
-    const uniSwapV3 = new UniswapV3(provider, this.quoter, this.tokenProvider, this.tokenStorage, this.config);
 
     this.load(zeroX);
-    this.load(uniSwapV2);
-    this.load(uniSwapV3);
   }
 
   /**
@@ -121,14 +112,7 @@ export class SwapHelper implements Swapper {
   }
 
   private async submitSwapTokensForTokens(params: SwapParams["input"]): Promise<SwapParams["output"]> {
-    const {
-      tokenIn,
-      tokenOut,
-      amountIn,
-      fee = "0.2",
-      feeReceiver = ethers.constants.AddressZero,
-      feeAmountOut,
-    } = params;
+    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.ZeroAddress, feeAmountOut } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
 
@@ -198,7 +182,7 @@ export class SwapHelper implements Swapper {
   }
 
   private async submitSwapETHForTokens(params: SwapParams["input"]): Promise<SwapParams["output"]> {
-    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.constants.AddressZero } = params;
+    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.ZeroAddress } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
     const amountInWei = `0x${new BigNumber(amountIn).multipliedBy(Math.pow(10, fromToken.decimals)).toString(16)}`;
@@ -234,7 +218,7 @@ export class SwapHelper implements Swapper {
   }
 
   private async submitSwapTokensForETH(params: SwapParams["input"]): Promise<SwapParams["output"]> {
-    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.constants.AddressZero } = params;
+    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.ZeroAddress } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
 

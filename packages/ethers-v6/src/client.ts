@@ -6,8 +6,8 @@ export class EthersClient implements Client {
   private _chainId: number = 0;
 
   constructor(private readonly provider: ethers.JsonRpcProvider) {
-    if (!provider._network.chainId) {
-      logger.warn("ChainId is not set, please set it by using `ethers.providers.StaticJsonRpcProvider`");
+    if (!provider?._network?.chainId) {
+      logger.warn("ChainId is not set, please set it by using `ethers.JsonRpcProvider`");
 
       this.provider
         .getNetwork()
