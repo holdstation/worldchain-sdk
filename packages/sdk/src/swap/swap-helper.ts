@@ -1,33 +1,14 @@
-import {
-  Estimator,
-  IdbTokenStorage,
-  SwapConfig,
-  SwapModule,
-  SwapParams,
-  Swapper,
-  Token,
-  TokenProvider,
-  TokenStorage,
-  ZeroX,
-  abi,
-  defaultWorldchainConfig,
-  getFeeDirect,
-  getFeeWithAmountIn,
-  isNativeToken,
-  logger,
-} from "@holdstation/worldchain-sdk";
 import { MiniKit } from "@worldcoin/minikit-js";
-import BigNumber from "bignumber.js";
-import { ethers } from "ethers";
-import { Client, Multicall3 } from "..";
-import { Quoter } from "../quote";
-import { UniswapV2 } from "./uniswap-v2";
-import { UniswapV3 } from "./uniswap-v3";
+import { BigNumber } from "bignumber.js";
+import { abi, getFeeDirect, getFeeWithAmountIn, isNativeToken, logger } from "..";
+import { Client } from "../client";
+import { IdbTokenStorage, Token, TokenStorage } from "../storage";
+import { TokenProvider } from "../token";
+import { defaultWorldchainConfig, Estimator, SwapConfig, SwapModule, SwapParams, Swapper } from "./swap";
 
 export class SwapHelper implements Swapper {
   private modules: Record<string, SwapModule> = {};
   private readonly tokenProvider: TokenProvider;
-  private quoter: Quoter;
   private tokenStorage: TokenStorage;
   estimate: Estimator;
 
@@ -42,20 +23,9 @@ export class SwapHelper implements Swapper {
       quote: this._quote.bind(this),
     };
 
-    const provider = this.client.getProvider();
-    const multicall3 = new Multicall3(provider);
-    this.tokenProvider = new TokenProvider({ client, multicall3 });
-    this.quoter = new Quoter(this.client);
+    this.tokenProvider = new TokenProvider({ client });
     this.tokenStorage = config?.tokenStorage ?? new IdbTokenStorage("TokenDB");
     this.config = Object.assign(this.config, config ?? {});
-
-    const zeroX = new ZeroX(this.tokenProvider, this.tokenStorage, this.config);
-    const uniSwapV2 = new UniswapV2(provider, this.quoter, this.tokenProvider, this.tokenStorage, this.config);
-    const uniSwapV3 = new UniswapV3(provider, this.quoter, this.tokenProvider, this.tokenStorage, this.config);
-
-    this.load(zeroX);
-    this.load(uniSwapV2);
-    this.load(uniSwapV3);
   }
 
   /**
@@ -126,7 +96,7 @@ export class SwapHelper implements Swapper {
       tokenOut,
       amountIn,
       fee = "0.2",
-      feeReceiver = ethers.constants.AddressZero,
+      feeReceiver = "0x0000000000000000000000000000000000000000",
       feeAmountOut,
     } = params;
     const { data, to } = params.tx;
@@ -198,7 +168,13 @@ export class SwapHelper implements Swapper {
   }
 
   private async submitSwapETHForTokens(params: SwapParams["input"]): Promise<SwapParams["output"]> {
-    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.constants.AddressZero } = params;
+    const {
+      tokenIn,
+      tokenOut,
+      amountIn,
+      fee = "0.2",
+      feeReceiver = "0x0000000000000000000000000000000000000000",
+    } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
     const amountInWei = `0x${new BigNumber(amountIn).multipliedBy(Math.pow(10, fromToken.decimals)).toString(16)}`;
@@ -234,7 +210,13 @@ export class SwapHelper implements Swapper {
   }
 
   private async submitSwapTokensForETH(params: SwapParams["input"]): Promise<SwapParams["output"]> {
-    const { tokenIn, tokenOut, amountIn, fee = "0.2", feeReceiver = ethers.constants.AddressZero } = params;
+    const {
+      tokenIn,
+      tokenOut,
+      amountIn,
+      fee = "0.2",
+      feeReceiver = "0x0000000000000000000000000000000000000000",
+    } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
 

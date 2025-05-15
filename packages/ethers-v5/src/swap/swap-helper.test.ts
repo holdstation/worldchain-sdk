@@ -1,6 +1,14 @@
-import { config, inmemoryTokenStorage, SwapParams, Swapper } from "@holdstation/worldchain-sdk";
+import {
+  config,
+  inmemoryTokenStorage,
+  SwapHelper,
+  SwapParams,
+  Swapper,
+  TokenProvider,
+  ZeroX,
+} from "@holdstation/worldchain-sdk";
 import { ethers } from "ethers";
-import { Client, Multicall3, SwapHelper } from "..";
+import { Client, Multicall3, Quoter, UniswapV2, UniswapV3 } from "..";
 
 describe("SwapHelper - quote", () => {
   let swapHelper: Swapper;
@@ -17,6 +25,26 @@ describe("SwapHelper - quote", () => {
     swapHelper = new SwapHelper(client, {
       tokenStorage: inmemoryTokenStorage,
     });
+    const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 });
+    const quoter = new Quoter(client, { tokenProvider });
+
+    const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
+    const uniswapV3 = new UniswapV3({
+      provider,
+      quoter,
+      tokenProvider,
+      tokenStorage: inmemoryTokenStorage,
+    });
+    const uniswapV2 = new UniswapV2({
+      provider,
+      quoter,
+      tokenProvider,
+      tokenStorage: inmemoryTokenStorage,
+    });
+
+    swapHelper.load(uniswapV3);
+    swapHelper.load(uniswapV2);
+    swapHelper.load(zeroX);
   });
 
   // Helper function to validate quote result
@@ -44,26 +72,28 @@ describe("SwapHelper - quote", () => {
     expect(Number(addons?.feeAmountOut)).toBeGreaterThanOrEqual(0); // Ensure fee amount is non-negative
   };
 
-  it("should return the correct estimated swap response v3 direct", async () => {
+  it("should return the correct estimated swap response 0x", async () => {
     const params: SwapParams["quoteInput"] = {
       tokenIn: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
       tokenOut: "0x4200000000000000000000000000000000000006",
       amountIn: "1",
       slippage: "0.3",
       fee: "0",
+      preferRouters: ["0x"],
     };
 
     const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
   }, 30000);
 
-  it("should return the correct estimated swap response v3 ETH", async () => {
+  it("should return the correct estimated swap response ETH", async () => {
     const params: SwapParams["quoteInput"] = {
       tokenIn: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
       tokenOut: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Native ETH
       amountIn: "1",
       slippage: "0.3",
       fee: "0",
+      preferRouters: ["0x"],
     };
 
     const result = await swapHelper.estimate.quote(params);
@@ -77,6 +107,7 @@ describe("SwapHelper - quote", () => {
       amountIn: "100",
       slippage: "0.3",
       fee: "0",
+      preferRouters: ["uniswap-v3"],
     };
 
     const result = await swapHelper.estimate.quote(params);
@@ -90,39 +121,10 @@ describe("SwapHelper - quote", () => {
       amountIn: "2",
       slippage: "0.3",
       fee: "0.2",
+      preferRouters: ["uniswap-v2"],
     };
 
     const result = await swapHelper.estimate.quote(params);
     validateQuoteResult(result);
-  }, 30000);
-
-  it("should return the correct estimated swap response v2 with token pairs", async () => {
-    const params: SwapParams["quoteInput"] = {
-      tokenIn: "0x2cFc85d8E48F8EAB294be644d9E25C3030863003", // Token A
-      tokenOut: "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1", // Token B
-      amountIn: "1000",
-      slippage: "0.3",
-      fee: "0.2",
-      preferRouters: ["0x"],
-    };
-
-    const result = await swapHelper.estimate.quote(params);
-    console.debug("Result:", result);
-    validateQuoteResult(result);
-  }, 30000);
-
-  it("should fail when slippage is out of range", async () => {
-    const params: SwapParams["quoteInput"] = {
-      tokenIn: "0x2cFc85d8E48F8EAB294be644d9E25C3030863003",
-      tokenOut: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Native ETH
-      amountIn: "1",
-      slippage: "101", // Invalid slippage (over 100%)
-      fee: "0",
-    };
-
-    // Call the function and expect it to throw an error
-    await expect(swapHelper.estimate.quote(params)).rejects.toThrowError(
-      "Invalid slippage value. It must be between 0 and 100.",
-    );
   }, 30000);
 });

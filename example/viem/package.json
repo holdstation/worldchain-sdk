@@ -1,18 +1,26 @@
 {
   "name": "example-viem",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "NODE_OPTIONS='--loader ts-node/esm' node cli.ts",
+    "build": "tsc",
+    "token:detail": "ts-node -e \"require('./functions').getTokenDetail().catch(console.error)\"",
+    "token:info": "ts-node -e \"require('./functions').getTokenInfo().catch(console.error)\"",
+    "swap:estimate": "ts-node -e \"require('./functions').estimateSwap().catch(console.error)\"",
+    "swap:execute": "ts-node -e \"require('./functions').swap().catch(console.error)\""
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/inquirer": "^8.2.10",
     "tsx": "^4.19.4"
   },
   "dependencies": {
-    "@holdstation/worldchain-sdk": "file:../../packages/core",
-    "@holdstation/worldchain-viem": "file:../../packages/viem"
+    "@holdstation/worldchain-sdk": "file:../../packages/sdk",
+    "@holdstation/worldchain-viem": "file:../../packages/viem",
+    "inquirer": "^8.2.5",
+    "viem": "^2.29.2"
   }
 }

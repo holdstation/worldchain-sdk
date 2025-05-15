@@ -1,4 +1,4 @@
-import { Client, Multicall3, Quoter, UniswapV2, UniswapV3 } from "@holdstation/worldchain-ethers-v5";
+import { Client, Multicall3 } from "@holdstation/worldchain-ethers-v6";
 import {
   config,
   inmemoryTokenStorage,
@@ -11,10 +11,16 @@ import { ethers } from "ethers";
 
 // Setup
 const RPC_URL = "https://worldchain-mainnet.g.alchemy.com/public";
-const provider = new ethers.providers.StaticJsonRpcProvider(RPC_URL, {
-  chainId: 480,
-  name: "worldchain",
-});
+const provider = new ethers.JsonRpcProvider(
+  RPC_URL,
+  {
+    chainId: 480,
+    name: "worldchain",
+  },
+  {
+    staticNetwork: true,
+  },
+);
 
 const client = new Client(provider);
 config.client = client;
@@ -25,24 +31,9 @@ const swapHelper = new SwapHelper(client, {
 });
 
 const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 });
-const quoter = new Quoter(client, { tokenProvider });
 
 const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
-const uniswapV3 = new UniswapV3({
-  provider,
-  quoter,
-  tokenProvider,
-  tokenStorage: inmemoryTokenStorage,
-});
-const uniswapV2 = new UniswapV2({
-  provider,
-  quoter,
-  tokenProvider,
-  tokenStorage: inmemoryTokenStorage,
-});
 
-swapHelper.load(uniswapV3);
-swapHelper.load(uniswapV2);
 swapHelper.load(zeroX);
 
 // Token functions
@@ -67,27 +58,6 @@ export async function getTokenInfo() {
 }
 
 // Quote functions
-export async function getSimpleQuote() {
-  console.log("Fetching simple quote...");
-  const WETH = "0x4200000000000000000000000000000000000006";
-  const USDCe = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
-  const quote = await quoter.simple(WETH, USDCe);
-
-  console.log("Quote:", quote.best);
-  return quote;
-}
-
-export async function getSmartQuote() {
-  console.log("Fetching smart quote...");
-  const WETH = "0x4200000000000000000000000000000000000006";
-  const quote = await quoter.smart(WETH, {
-    slippage: 3,
-    deadline: 10,
-  });
-
-  console.log("Quote:", quote.quote);
-  return quote;
-}
 
 // Swap functions
 export async function estimateSwap() {
@@ -98,7 +68,7 @@ export async function estimateSwap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["0x", "uniswap-v2", "uniswap-v3"],
+    preferRouters: ["0x"],
   };
 
   const result = await swapHelper.estimate.quote(params);
@@ -114,7 +84,7 @@ export async function swap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["0x", "uniswap-v2", "uniswap-v3"],
+    preferRouters: ["0x"],
   };
 
   const quoteResponse = await swapHelper.estimate.quote(params);
@@ -129,7 +99,7 @@ export async function swap() {
     },
     feeAmountOut: quoteResponse.addons?.feeAmountOut,
     fee: "0.2",
-    feeReceiver: ethers.constants.AddressZero, // ZERO_ADDRESS or your fee receiver address
+    feeReceiver: ethers.ZeroAddress, // ZERO_ADDRESS or your fee receiver address
   };
   const result = await swapHelper.swap(swapParams);
   console.log("Swap result:", result);

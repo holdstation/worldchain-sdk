@@ -16,18 +16,28 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { Quoter } from "../quote";
 
+type UniswapV2Options = {
+  provider: ethers.providers.JsonRpcProvider;
+  quoter: Quoter;
+  tokenProvider: TokenProvider;
+  tokenStorage: TokenStorage;
+  config?: Partial<SwapConfig>;
+};
+
 export class UniswapV2 implements SwapModule {
   private config: SwapConfig = defaultWorldchainConfig;
+  private readonly provider: ethers.providers.JsonRpcProvider;
+  private readonly quoter: Quoter;
+  private readonly tokenProvider: TokenProvider;
+  private readonly tokenStorage: TokenStorage;
 
-  constructor(
-    private readonly provider: ethers.providers.JsonRpcProvider,
-    private readonly quoter: Quoter,
-    private readonly tokenProvider: TokenProvider,
-    private readonly tokenStorage: TokenStorage,
+  constructor(options: UniswapV2Options) {
+    this.provider = options.provider;
+    this.quoter = options.quoter;
+    this.tokenProvider = options.tokenProvider;
+    this.tokenStorage = options.tokenStorage;
 
-    config?: Partial<SwapConfig>,
-  ) {
-    this.config = Object.assign(this.config, config ?? {});
+    this.config = Object.assign(this.config, options.config ?? {});
   }
 
   name(): string {

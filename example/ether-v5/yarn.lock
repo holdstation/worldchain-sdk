@@ -352,10 +352,10 @@
     "@ethersproject/strings" "^5.8.0"
 
 "@holdstation/worldchain-ethers-v5@file:../../packages/ethers-v5":
-  version "4.0.9"
+  version "4.0.14"
 
-"@holdstation/worldchain-sdk@file:../../packages/core":
-  version "0.0.0"
+"@holdstation/worldchain-sdk@file:../../packages/sdk":
+  version "4.0.14"
 
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.1.2"

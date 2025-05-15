@@ -12,10 +12,14 @@ export class ViemClient implements Client {
   private _chainId: number = 0
 
   constructor(private publicClient: PublicClient) {
-    this.publicClient
-      .getChainId()
-      .then((chainId) => (this._chainId = chainId))
-      .catch((error) => logger.error('Error getting chain ID:', error))
+    if (this.publicClient.chain?.id) {
+      this._chainId = this.publicClient.chain?.id
+    } else {
+      this.publicClient
+        .getChainId()
+        .then((chainId) => (this._chainId = chainId))
+        .catch((error) => logger.error('Error getting chain ID:', error))
+    }
   }
 
   codec(abi: any): AbiCodec {
@@ -48,6 +52,10 @@ export class ViemClient implements Client {
 
   getLogs(filter: Partial<FilterLogs['request']>): Promise<FilterLogs['response'][]> {
     throw new Error('Method not implemented.')
+  }
+
+  getPublicClient(): PublicClient {
+    return this.publicClient
   }
 
   async getTransaction(hash: string): Promise<OnchainTransaction> {

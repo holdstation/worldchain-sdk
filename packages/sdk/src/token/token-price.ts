@@ -1,4 +1,5 @@
 import { logger } from "../logger";
+import { isNativeToken } from "../swap";
 
 interface TokenData {
   data: {
@@ -156,10 +157,14 @@ export async function getTokenPriceUSD(tokenId: string, version: string): Promis
 
 export async function getBestTokenPriceUSD(tokenId: string): Promise<number> {
   try {
+    let tokenAddress = tokenId;
+    if (isNativeToken(tokenId)) {
+      tokenAddress = "0x4200000000000000000000000000000000000006"; // WETH on WorldChain
+    }
     // Try to get price from both V3 and V4
     const [priceV3, priceV4] = await Promise.allSettled([
-      getTokenPriceUSD(tokenId, "v3"),
-      getTokenPriceUSD(tokenId, "v4"),
+      getTokenPriceUSD(tokenAddress, "v3"),
+      getTokenPriceUSD(tokenAddress, "v4"),
     ]);
 
     const v3Price = priceV3.status === "fulfilled" ? priceV3.value : 0;
