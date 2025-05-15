@@ -91,7 +91,7 @@ export class ZeroX implements SwapModule {
       chainId: 480,
       sellToken: tokenIn.address,
       buyToken: tokenOut.address,
-      sellAmount: new BigNumber(amountInWei).toFixed(),
+      sellAmount: new BigNumber(amountInWei).toFixed(0),
       taker: this.config.spender,
       slippageBps: slippage * 100, // 0 - > 1000 : 0% - > 10%
       tradeSurplusRecipient: this.config.tradeSurplusRecipient,
