@@ -74,6 +74,7 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
     validateQuoteResult(result);
   }, 30000);
 
@@ -88,6 +89,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 
@@ -102,6 +105,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 
@@ -116,6 +121,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 });

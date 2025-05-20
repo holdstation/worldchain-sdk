@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { URLSearchParams } from "url";
 import { Token, TokenStorage } from "../storage";
-import { getBestTokenPriceUSD, TokenProvider } from "../token";
+import { TokenProvider } from "../token";
 import { getFeeDirect, getFeeWithAmountIn, getFeeWithAmountOut, isNativeToken } from "./fee";
 import { defaultWorldchainConfig, SwapConfig, SwapModule, SwapParams } from "./swap";
 import { ZeroXRequestParams, ZeroXResponse } from "./zero-x.types";
@@ -55,6 +55,24 @@ export class ZeroX implements SwapModule {
     const result = await response.json();
     // Parse and return the JSON response
     return result as ZeroXResponse;
+  }
+
+  private async tokenRateUsd(token: Token): Promise<number> {
+    if (token.address === this.config.stableCoins[0]) {
+      return 1;
+    }
+
+    // Build query parameters string
+    const data = await this.zeroXRequest({
+      chainId: 480,
+      sellToken: token.address,
+      buyToken: this.config.stableCoins[0],
+      sellAmount: new BigNumber(1).multipliedBy(10 ** token.decimals).toFixed(0),
+      taker: this.config.spender,
+      slippageBps: 0,
+    });
+    // Parse and return the JSON response
+    return new BigNumber(data.buyAmount).dividedBy(10 ** 6).toNumber(); // usdc decimals
   }
 
   async estimate(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
@@ -117,7 +135,7 @@ export class ZeroX implements SwapModule {
       .dividedBy(amountOut)
       .multipliedBy(10 ** tokenOut.decimals);
 
-    const rateTokenOut = await getBestTokenPriceUSD(tokenOut.address);
+    const rateTokenOut = await this.tokenRateUsd(tokenOut);
 
     const minmumReceived = amountOutMin.div(Math.pow(10, tokenOut.decimals));
 
