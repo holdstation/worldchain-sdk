@@ -3,10 +3,12 @@ import { URLSearchParams } from "url";
 import { Token, TokenStorage } from "../storage";
 import { TokenProvider } from "../token";
 import { getFeeDirect, getFeeWithAmountIn, getFeeWithAmountOut, isNativeToken } from "./fee";
+import { HoldSoSwapRequestParams, HoldSoSwapResponse } from "./hold-so.types";
 import { defaultWorldchainConfig, SwapConfig, SwapModule, SwapParams } from "./swap";
-import { ZeroXRequestParams, ZeroXResponse } from "./zero-x.types";
 
-export class ZeroX implements SwapModule {
+const ROUTER_HOLD_SO = "0x0281c83C8F53314DFF3ebE24A90ee2412A2aA970";
+
+export class HoldSo implements SwapModule {
   private config: SwapConfig = defaultWorldchainConfig;
 
   constructor(
@@ -19,16 +21,16 @@ export class ZeroX implements SwapModule {
   }
 
   name(): string {
-    return "0x";
+    return "hold-so";
   }
 
   enabled(chainId: number): boolean {
     return chainId === 480;
   }
 
-  private async zeroXRequest(data: ZeroXRequestParams): Promise<ZeroXResponse> {
+  private async holdSoSwapRequest(data: HoldSoSwapRequestParams): Promise<HoldSoSwapResponse> {
     // Build query parameters string
-    const url = `https://bridge.holdstation.com/0x/swap/allowance-holder/quote`;
+    const url = `https://api.worldswap.org/worldchain/api/swap`;
 
     const queryParams = new URLSearchParams();
 
@@ -39,11 +41,10 @@ export class ZeroX implements SwapModule {
       }
     });
 
-    // Make the fetch request
     const response = await fetch(`${url}?${queryParams.toString()}`, {
       method: "GET",
       headers: {
-        "X-Bridge-Purpose": "worldchain-app",
+        Accept: "application/json",
         "Content-Type": "application/json",
       },
     });
@@ -54,25 +55,7 @@ export class ZeroX implements SwapModule {
 
     const result = await response.json();
     // Parse and return the JSON response
-    return result as ZeroXResponse;
-  }
-
-  private async tokenRateUsd(token: Token): Promise<number> {
-    if (token.address === this.config.stableCoins[0]) {
-      return 1;
-    }
-
-    // Build query parameters string
-    const data = await this.zeroXRequest({
-      chainId: 480,
-      sellToken: token.address,
-      buyToken: this.config.stableCoins[0],
-      sellAmount: new BigNumber(1).multipliedBy(10 ** token.decimals).toFixed(0),
-      taker: this.config.spender,
-      slippageBps: 0,
-    });
-    // Parse and return the JSON response
-    return new BigNumber(data.buyAmount).dividedBy(10 ** 6).toNumber(); // usdc decimals
+    return result as HoldSoSwapResponse;
   }
 
   async estimate(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
@@ -105,17 +88,15 @@ export class ZeroX implements SwapModule {
     }
 
     // Fetch the best rate for the swapFetch the best rate for the swap
-    const data = await this.zeroXRequest({
-      chainId: 480,
-      sellToken: tokenIn.address,
-      buyToken: tokenOut.address,
-      sellAmount: new BigNumber(amountInWei).toFixed(0),
-      taker: this.config.spender,
-      slippageBps: slippage * 100, // 0 - > 1000 : 0% - > 10%
-      tradeSurplusRecipient: this.config.tradeSurplusRecipient,
+    const data = await this.holdSoSwapRequest({
+      src: tokenIn.address,
+      dst: tokenOut.address,
+      amount: new BigNumber(amountInWei).toFixed(0),
+      receiver: this.config.spender,
+      slippage: slippage / 100,
     });
 
-    const amountOut = new BigNumber(data.buyAmount);
+    const amountOut = new BigNumber(data.quote.toAmount);
 
     let feeOut = new BigNumber(0);
     if (
@@ -135,18 +116,16 @@ export class ZeroX implements SwapModule {
       .dividedBy(amountOut)
       .multipliedBy(10 ** tokenOut.decimals);
 
-    const rateTokenOut = await this.tokenRateUsd(tokenOut);
-
     const minmumReceived = amountOutMin.div(Math.pow(10, tokenOut.decimals));
 
     // amountUsd = tokenAmount / 10^decimals * rateUsdPerToken
-    const amountOutUsd = new BigNumber(amountOut).div(10 ** tokenOut.decimals).multipliedBy(rateTokenOut);
+    const amountOutUsd = new BigNumber(data.quote.toAmountUsd);
 
     // Return the response with calculated values and populated transaction
     const resp: SwapParams["quoteOutput"] = {
-      data: data.transaction.data ?? "",
+      data: data.tx.data ?? "",
       value: isNativeToken(tokenIn.address) ? amountInWei.toFixed() : "0",
-      to: data.transaction.to ?? "",
+      to: ROUTER_HOLD_SO,
       addons: {
         outAmount: amountOut.div(10 ** tokenOut.decimals).toString(),
         rateSwap: rateSwap.toString(),

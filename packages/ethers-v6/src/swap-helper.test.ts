@@ -1,5 +1,6 @@
 import {
   config,
+  HoldSo,
   inmemoryTokenStorage,
   SwapHelper,
   SwapParams,
@@ -34,8 +35,9 @@ describe("SwapHelper - quote", () => {
 
     const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 });
     const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
-
+    const holdSo = new HoldSo(tokenProvider, inmemoryTokenStorage);
     swapHelper.load(zeroX);
+    swapHelper.load(holdSo);
   });
 
   // Helper function to validate quote result
@@ -74,6 +76,22 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+    validateQuoteResult(result);
+  }, 30000);
+
+  it("should return the correct estimated swap response holdso", async () => {
+    const params: SwapParams["quoteInput"] = {
+      tokenIn: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
+      tokenOut: "0x4200000000000000000000000000000000000006",
+      amountIn: "1",
+      slippage: "0.3",
+      fee: "0",
+      preferRouters: ["hold-so"],
+    };
+
+    const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
     validateQuoteResult(result);
   }, 30000);
 
@@ -88,6 +106,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 
@@ -102,6 +122,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 
@@ -116,6 +138,8 @@ describe("SwapHelper - quote", () => {
     };
 
     const result = await swapHelper.estimate.quote(params);
+    console.debug("result", result);
+
     validateQuoteResult(result);
   }, 30000);
 });
