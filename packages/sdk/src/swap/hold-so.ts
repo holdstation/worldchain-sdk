@@ -6,7 +6,7 @@ import { getFeeDirect, getFeeWithAmountIn, getFeeWithAmountOut, isNativeToken } 
 import { HoldSoSwapRequestParams, HoldSoSwapResponse } from "./hold-so.types";
 import { defaultWorldchainConfig, SwapConfig, SwapModule, SwapParams } from "./swap";
 
-const ROUTER_HOLD_SO = "0x";
+const ROUTER_HOLD_SO = "0x0281c83C8F53314DFF3ebE24A90ee2412A2aA970";
 
 export class HoldSo implements SwapModule {
   private config: SwapConfig = defaultWorldchainConfig;
