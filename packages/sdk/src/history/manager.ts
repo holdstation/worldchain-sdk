@@ -30,8 +30,6 @@ export class Manager {
   private readonly transactionStorage: TransactionStorage;
 
   constructor(
-    private readonly fromBlock: number = 100_000,
-    private readonly toBlock: number = 200_000,
     options?: Partial<{
       client: Client;
       tokenProvider: TokenProvider;
@@ -55,7 +53,7 @@ export class Manager {
     this.transactionStorage = options?.storage?.tx ?? inmemoryTransactionStorage;
   }
 
-  watch = async (address: string) => {
+  watch = async (address: string, fromBlock: number, toBlock: number) => {
     const mutex = this.mutex;
     const release = await mutex.acquire();
 
@@ -86,7 +84,7 @@ export class Manager {
             const runner = this.listeners[address.toLowerCase()];
 
             runner
-              .run(this.fromBlock, this.toBlock)
+              .run(fromBlock, toBlock)
               .then(() => {
                 logger.debug(`Runner started for ${address}`);
               })
