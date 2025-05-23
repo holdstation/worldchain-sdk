@@ -30,7 +30,8 @@ export class Manager {
   private readonly transactionStorage: TransactionStorage;
 
   constructor(
-    private readonly blockToWatch: number = 100_000,
+    private readonly fromBlock: number = 100_000,
+    private readonly toBlock: number = 200_000,
     options?: Partial<{
       client: Client;
       tokenProvider: TokenProvider;
@@ -85,7 +86,7 @@ export class Manager {
             const runner = this.listeners[address.toLowerCase()];
 
             runner
-              .run(this.blockToWatch)
+              .run(this.fromBlock, this.toBlock)
               .then(() => {
                 logger.debug(`Runner started for ${address}`);
               })
@@ -140,13 +141,13 @@ export class Runner {
     this.tokenProvider = options.tokenProvider;
   }
 
-  run = async (blockToWatch: number) => {
+  run = async (fromBlock: number, toBlock: number) => {
     this.lastBlock = await this.client.getBlockNumber();
-    const latestBlock = await this.transactionStorage.findLastBlock();
-    const minBlock = Math.max(latestBlock, this.lastBlock - blockToWatch); // get first 100_000 block
+    const lastBlockScan = await this.transactionStorage.findLastBlock();
+    const minBlock = Math.max(lastBlockScan, fromBlock); // get first 100_000 block
     this.minBlock = minBlock;
 
-    logger.debug("Block", { last: this.lastBlock, min: this.minBlock });
+    logger.debug("Block", { last: Math.min(toBlock, this.lastBlock), min: this.minBlock });
 
     // Run in two side
     // from minBlock to minBlock - 10_000
