@@ -83,12 +83,9 @@ export class Manager {
           try {
             const runner = this.listeners[address.toLowerCase()];
 
-            runner
-              .run(fromBlock, toBlock)
-              .then(() => {
-                logger.debug(`Runner started for ${address}`);
-              })
-              .catch((e: any) => logger.error(`Error starting runner for ${address}`, e));
+            logger.debug(`Starting runner for ${address}...`);
+            await runner.run(fromBlock, toBlock);
+            logger.debug(`Runner for ${address} successfully started`);
           } finally {
             release();
           }
@@ -164,15 +161,10 @@ export class Runner {
         return;
       }
 
-      await this.queryLogs(this.lastBlock - 10_000, this.lastBlock)
-        .then(() => {
-          // Update minBlock to avoid duplicated query
-          this.lastBlock = this.lastBlock - 10_000;
-        })
-        .catch((e: any) => {
-          // This is tricky step to avoid missing data
-          logger.error("Error in sideMinBlock", e);
-        });
+      await this.queryLogs(this.lastBlock - 10_000, this.lastBlock).then(() => {
+        // Update minBlock to avoid duplicated query
+        this.lastBlock = this.lastBlock - 10_000;
+      });
 
       // Delay to avoid rate limit
       await new Promise((resolve) => {
