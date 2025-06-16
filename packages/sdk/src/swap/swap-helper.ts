@@ -53,29 +53,33 @@ export class SwapHelper implements Swapper {
       throw new Error("No valid router available");
     }
 
-    const timeoutPromise = new Promise<undefined>((_, reject) =>
-      setTimeout(() => {
-        reject(new Error(`Timeout after ${timeout}ms`));
-      }, timeout),
-    );
+    const startTime = Date.now();
+    const errors: Array<{ router: string; error: unknown }> = [];
 
-    const estimationPromises = validModules.map((swapper) =>
-      swapper.estimate(params).catch((e) => {
-        logger.error(`Error estimating swap for router ${swapper.name()}:`, e);
-        return undefined;
-      }),
-    );
+    // Try each router sequentially until one succeeds
+    for (const swapper of validModules) {
+      // Check if we've exceeded the timeout
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= timeout) {
+        throw new Error(`Timeout after ${timeout}ms`);
+      }
 
-    const result = await Promise.race([
-      Promise.all(estimationPromises).then((results) => results.find((r) => r !== undefined)),
-      timeoutPromise,
-    ]);
-
-    if (!result) {
-      throw new Error("No router available");
+      try {
+        const result = await swapper.estimate(params);
+        if (result) {
+          return result;
+        }
+      } catch (error) {
+        logger.error(`Error estimating swap for router ${swapper.name()}:`, error);
+        errors.push({ router: swapper.name(), error });
+      }
     }
 
-    return result;
+    // If we reach here, all routers failed
+    const errorMessages = errors
+      .map((e) => `${e.router}: ${e.error instanceof Error ? e.error.message : e.error}`)
+      .join("; ");
+    throw new Error(`All routers failed. Errors: ${errorMessages}`);
   }
 
   async swap(params: SwapParams["input"]): Promise<SwapParams["output"]> {
