@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js";
-import { URLSearchParams } from "url";
 import { Token, TokenStorage } from "../storage";
 import { TokenProvider } from "../token";
 import { getFeeDirect, getFeeWithAmountIn, getFeeWithAmountOut, isNativeToken } from "./fee";
