@@ -4,6 +4,7 @@ import { abi, getFeeDirect, getFeeWithAmountIn, isNativeToken, logger } from "..
 import { Client } from "../client";
 import { IdbTokenStorage, Token, TokenStorage } from "../storage";
 import { TokenProvider } from "../token";
+import { getPartnerCode } from "./partner";
 import { defaultWorldchainConfig, Estimator, SwapConfig, SwapModule, SwapParams, Swapper } from "./swap";
 
 export class SwapHelper implements Swapper {
@@ -102,6 +103,7 @@ export class SwapHelper implements Swapper {
       fee = "0.2",
       feeReceiver = "0x0000000000000000000000000000000000000000",
       feeAmountOut,
+      partnerCode,
     } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
@@ -128,6 +130,8 @@ export class SwapHelper implements Swapper {
       feeToken = "1";
     }
 
+    const partnerData = this.packPartnerData(partnerCode ?? getPartnerCode() ?? "0", feeAmount);
+
     const rawData = {
       transaction: [
         {
@@ -141,7 +145,7 @@ export class SwapHelper implements Swapper {
             data,
             sellAmount,
             feeToken,
-            feeAmount,
+            partnerData,
             feeReceiver,
             [permitTransfer.nonce, permitTransfer.deadline, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           ],
@@ -178,6 +182,7 @@ export class SwapHelper implements Swapper {
       amountIn,
       fee = "0.2",
       feeReceiver = "0x0000000000000000000000000000000000000000",
+      partnerCode,
     } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
@@ -185,13 +190,15 @@ export class SwapHelper implements Swapper {
 
     const feeAmount = getFeeWithAmountIn(tokenOut, new BigNumber(amountInWei), Number(fee))?.feeAmount ?? "0";
 
+    const partnerData = this.packPartnerData(partnerCode ?? getPartnerCode() ?? "0", feeAmount);
+
     const rawData = {
       transaction: [
         {
           address: this.config.spender,
           abi: abi.DEX_ABI,
           functionName: "fillQuoteEthToToken",
-          args: [tokenOut, to, data, feeAmount, feeReceiver],
+          args: [tokenOut, to, data, partnerData, feeReceiver],
           value: amountInWei,
         },
       ],
@@ -220,6 +227,7 @@ export class SwapHelper implements Swapper {
       amountIn,
       fee = "0.2",
       feeReceiver = "0x0000000000000000000000000000000000000000",
+      partnerCode,
     } = params;
     const { data, to } = params.tx;
     const fromToken = await this.findToken(tokenIn);
@@ -235,6 +243,9 @@ export class SwapHelper implements Swapper {
       nonce: Date.now().toString(),
       deadline,
     };
+
+    const partnerData = this.packPartnerData(partnerCode ?? getPartnerCode() ?? "0", feePercent);
+
     const rawData = {
       transaction: [
         {
@@ -246,7 +257,7 @@ export class SwapHelper implements Swapper {
             to,
             data,
             sellAmount,
-            feePercent,
+            partnerData,
             feeReceiver,
             [permitTransfer.nonce, permitTransfer.deadline, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           ],
@@ -300,5 +311,20 @@ export class SwapHelper implements Swapper {
     }
 
     return token;
+  }
+
+  private packPartnerData(partnerCode: string, fee: string): BigNumber {
+    // Convert to JavaScript BigInts for bitwise operation
+    const partnerCodeBigInt = BigInt(partnerCode);
+    const feeBigInt = BigInt(fee);
+
+    // Shift partner code left by 240 bits
+    const shiftedPartnerCode = partnerCodeBigInt << 240n;
+
+    // Perform bitwise OR
+    const result = shiftedPartnerCode | feeBigInt;
+
+    // Convert back to BigNumber
+    return new BigNumber(result.toString());
   }
 }

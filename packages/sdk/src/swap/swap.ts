@@ -94,6 +94,7 @@ export type SwapParams = {
     feeAmountOut?: string;
     fee?: string;
     feeReceiver?: string;
+    partnerCode?: string;
   };
   output: {
     success: boolean;

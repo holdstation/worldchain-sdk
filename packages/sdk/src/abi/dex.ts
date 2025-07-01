@@ -36,7 +36,7 @@ export const DEX_ABI = [
         internalType: "bytes",
       },
       {
-        name: "feeAmount",
+        name: "partnerData",
         type: "uint256",
         internalType: "uint256",
       },
@@ -144,7 +144,7 @@ export const DEX_ABI = [
         internalType: "enum FeeToken",
       },
       {
-        name: "feeAmount",
+        name: "partnerData",
         type: "uint256",
         internalType: "uint256",
       },
@@ -519,7 +519,7 @@ export const DEX_ABI = [
         internalType: "uint256",
       },
       {
-        name: "feeAmount",
+        name: "partnerData",
         type: "uint256",
         indexed: false,
         internalType: "uint256",
@@ -562,7 +562,7 @@ export const DEX_ABI = [
         internalType: "uint256",
       },
       {
-        name: "feeAmount",
+        name: "partnerData",
         type: "uint256",
         indexed: false,
         internalType: "uint256",
@@ -617,7 +617,7 @@ export const DEX_ABI = [
         internalType: "enum FeeToken",
       },
       {
-        name: "feeAmount",
+        name: "partnerData",
         type: "uint256",
         indexed: false,
         internalType: "uint256",
