@@ -35,32 +35,32 @@ npm install @holdstation/worldchain-viem viem
 ### Using with ethers.js v5
 
 ```typescript
-import { ethers } from 'ethers';
-import { Client, Multicall3 } from '@holdstation/worldchain-ethers-v5';
-import { TokenProvider } from '@holdstation/worldchain-sdk';
+import { ethers } from "ethers";
+import { Client, Multicall3 } from "@holdstation/worldchain-ethers-v5";
+import { TokenProvider } from "@holdstation/worldchain-sdk";
 
 // Initialize provider
-const provider = new ethers.providers.JsonRpcProvider('RPC_URL');
+const provider = new ethers.providers.JsonRpcProvider("RPC_URL");
 const client = new Client(provider);
 const multicall = new Multicall3(provider);
 
 // Use the TokenProvider for token operations
 const tokenProvider = new TokenProvider({ client, multicall });
-const tokenInfo = await tokenProvider.details('0x123...'); // Get token details
+const tokenInfo = await tokenProvider.details("0x123..."); // Get token details
 ```
 
 ### Using with viem
 
 ```typescript
-import { createPublicClient, http } from 'viem';
-import { worldchain } from 'viem/chains';
-import { Client, Multicall3 } from '@holdstation/worldchain-viem';
-import { TokenProvider } from '@holdstation/worldchain-sdk';
+import { createPublicClient, http } from "viem";
+import { worldchain } from "viem/chains";
+import { Client, Multicall3 } from "@holdstation/worldchain-viem";
+import { TokenProvider } from "@holdstation/worldchain-sdk";
 
 // Initialize provider
 const publicClient = createPublicClient({
   chain: worldchain,
-  transport: http('RPC_URL')
+  transport: http("RPC_URL"),
 });
 
 const client = new Client(publicClient);
@@ -68,7 +68,7 @@ const multicall = new Multicall3(publicClient);
 
 // Use the TokenProvider
 const tokenProvider = new TokenProvider({ client, multicall });
-const tokenInfo = await tokenProvider.details('0x123...'); // Get token details
+const tokenInfo = await tokenProvider.details("0x123..."); // Get token details
 ```
 
 ## Packages
@@ -84,9 +84,9 @@ const tokenInfo = await tokenProvider.details('0x123...'); // Get token details
 
 ```typescript
 // Example with AbiCodec
-const abi = ['function balanceOf(address) view returns (uint256)'];
+const abi = ["function balanceOf(address) view returns (uint256)"];
 const codec = client.codec(abi);
-const data = codec.encodeFunctionData('balanceOf', ['0xAddress']);
+const data = codec.encodeFunctionData("balanceOf", ["0xAddress"]);
 ```
 
 ### Multicall3
@@ -96,7 +96,7 @@ const data = codec.encodeFunctionData('balanceOf', ['0xAddress']);
 const calls = [
   {
     target: tokenAddress,
-    callData: codec.encodeFunctionData('balanceOf', [userAddress])
+    callData: codec.encodeFunctionData("balanceOf", [userAddress]),
   },
   // More calls...
 ];
@@ -115,6 +115,74 @@ console.log(token.name, token.symbol, token.decimals);
 const balance = await tokenProvider.balanceOf(tokenAddress, userAddress);
 ```
 
+## Important: Setting Your Partner Code
+
+> ⚠️ **REQUIRED**: You must set a partner code when using the SDK for swaps.
+
+### How to Get a Partner Code
+
+Contact the Holdstation team to get your unique partner code:
+
+- Telegram: @HoldstationW_EN
+
+### Setting Your Partner Code
+
+Set your partner code as early as possible in your application:
+
+```typescript
+import { setPartnerCode } from "@holdstation/worldchain-sdk";
+
+// Set your partner code at app initialization
+setPartnerCode("YOUR_PARTNER_CODE"); // Replace with your actual code
+```
+
+If you don't set a partner code, you'll see warning messages in the console when using swap functionality.
+
+### Additional Partner Code Options
+
+#### Setting Per Transaction
+
+You can also specify the partner code for individual swap transactions:
+
+```typescript
+import { SwapParams } from "@holdstation/worldchain-sdk";
+
+// When making a swap
+const swapInput: SwapParams["input"] = {
+  tokenIn: "0x...",
+  tokenOut: "0x...",
+  amountIn: "1000000000000000000", // 1 token with 18 decimals
+  partnerCode: "YOUR_PARTNER_CODE", // Set partner code here
+  tx: {
+    data: "0x...",
+    to: "0x...",
+    value: "0",
+  },
+};
+
+const result = await swapper.swap(swapInput);
+```
+
+#### Checking Current Partner Code
+
+You can check the currently set partner code:
+
+```typescript
+import { getPartnerCode } from "@holdstation/worldchain-sdk";
+
+const currentCode = getPartnerCode(); // Returns the code or null if not set
+```
+
+#### Clearing Partner Code
+
+If needed, you can clear the partner code:
+
+```typescript
+import { clearPartnerCode } from "@holdstation/worldchain-sdk";
+
+clearPartnerCode();
+```
+
 ## Advanced Usage
 
 ### Creating Custom Implementations
@@ -122,7 +190,7 @@ const balance = await tokenProvider.balanceOf(tokenAddress, userAddress);
 You can implement the interfaces from the core package to create custom providers:
 
 ```typescript
-import { Client } from '@holdstation/worldchain-sdk';
+import { Client } from "@holdstation/worldchain-sdk";
 
 class CustomClient implements Client {
   // Implement the required methods

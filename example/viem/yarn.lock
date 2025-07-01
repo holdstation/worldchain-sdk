@@ -132,11 +132,15 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.25.4.tgz#0b17ec8a70b2385827d52314c1253160a0b9bacc"
   integrity sha512-nOT2vZNw6hJ+z43oP1SPea/G/6AbN6X+bGNhNuq8NtRHy4wsMhw765IKLNmnjek7GvjWBYQ8Q5VBoYTFg9y1UQ==
 
-"@holdstation/worldchain-sdk@file:../../packages/sdk":
-  version "4.0.14"
+"@holdstation/worldchain-sdk@^4.0.25":
+  version "4.0.25"
+  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-sdk/-/worldchain-sdk-4.0.25.tgz#f096b04d9390e6684be07c9083a0e7c92ae6238b"
+  integrity sha512-CK8wPWpWIBh12SO4yzlSDQZ8Hkxtaya/JObrdvhfhDDm6EyoxTG9zURK/Y3RbPqjTE8na6WZW/PP/ailBx0N8Q==
 
-"@holdstation/worldchain-viem@file:../../packages/viem":
-  version "4.0.14"
+"@holdstation/worldchain-viem@^4.0.25":
+  version "4.0.25"
+  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-viem/-/worldchain-viem-4.0.25.tgz#a446da43cc4b84a896d52c1936cbffe6242bfbab"
+  integrity sha512-tvhDh9DUJukMoZtUqXe4D7sw3SkSPV8Tm/NgPnvOvHmCMH7AcmhKZz/WfEDcUWx7wr0BPSBykLPpIpuZ6I1ZdA==
 
 "@noble/curves@1.8.2", "@noble/curves@~1.8.1":
   version "1.8.2"

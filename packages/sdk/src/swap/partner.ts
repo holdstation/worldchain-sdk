@@ -11,7 +11,7 @@ interface StorageInterface {
 }
 
 // Storage key constant
-const PARTNER_CODE_KEY = "holdstation_partner_code";
+const PARTNER_CODE_KEY = "code.pnrtnr";
 
 /**
  * Safely check if we're in an environment with localStorage
@@ -119,3 +119,38 @@ export const clearPartnerCode = (): boolean => {
 
   return true;
 };
+
+// Variable to track if interval is already running
+let partnerCodeCheckIntervalId: number | null = null;
+
+/**
+ * Initialize a check that periodically warns if partner code is not set
+ * Called automatically when this module is imported
+ */
+export const initPartnerCodeCheck = (): void => {
+  // Don't set interval if already running
+  if (partnerCodeCheckIntervalId) {
+    return;
+  }
+
+  try {
+    // Use Function constructor to safely check for setInterval in any environment
+    const setIntervalSafe = new Function('return typeof setInterval === "function" ? setInterval : null')();
+
+    if (setIntervalSafe) {
+      partnerCodeCheckIntervalId = setIntervalSafe(() => {
+        if (!getPartnerCode()) {
+          // Display a warning message about missing partner code
+          logger.warn("⚠️ Partner code is not set. Please call setPartnerCode()");
+        }
+      }, 5000);
+
+      logger.debug("Partner code check initialized");
+    }
+  } catch (e) {
+    logger.debug("Could not initialize partner code check:", e);
+  }
+};
+
+// Automatically start the check when this module is loaded
+initPartnerCodeCheck();

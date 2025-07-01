@@ -1,6 +1,7 @@
 import { Client, Multicall3 } from "@holdstation/worldchain-ethers-v6";
 import {
   config,
+  HoldSo,
   inmemoryTokenStorage,
   SwapHelper,
   SwapParams,
@@ -33,8 +34,10 @@ const swapHelper = new SwapHelper(client, {
 const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 });
 
 const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
+const worldswap = new HoldSo(tokenProvider, inmemoryTokenStorage);
 
 swapHelper.load(zeroX);
+swapHelper.load(worldswap);
 
 // Token functions
 export async function getTokenDetail() {
@@ -68,7 +71,7 @@ export async function estimateSwap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["0x"],
+    preferRouters: ["hold-so", "0x"],
   };
 
   const result = await swapHelper.estimate.quote(params);
@@ -97,6 +100,7 @@ export async function swap() {
       to: quoteResponse.to,
       value: quoteResponse.value,
     },
+    partnerCode: "0", // Replace with your partner code, contact to holdstation team to get one
     feeAmountOut: quoteResponse.addons?.feeAmountOut,
     fee: "0.2",
     feeReceiver: ethers.ZeroAddress, // ZERO_ADDRESS or your fee receiver address

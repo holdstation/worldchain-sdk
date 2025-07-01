@@ -132,11 +132,15 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.25.4.tgz#0b17ec8a70b2385827d52314c1253160a0b9bacc"
   integrity sha512-nOT2vZNw6hJ+z43oP1SPea/G/6AbN6X+bGNhNuq8NtRHy4wsMhw765IKLNmnjek7GvjWBYQ8Q5VBoYTFg9y1UQ==
 
-"@holdstation/worldchain-ethers-v6@file:../../packages/ethers-v6":
-  version "4.0.14"
+"@holdstation/worldchain-ethers-v6@^4.0.25":
+  version "4.0.25"
+  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-ethers-v6/-/worldchain-ethers-v6-4.0.25.tgz#1a714c261a6bfdf0034f76e152684248238c1cd4"
+  integrity sha512-AiBFWynxqeNkxWsYBpiU7lSgSzQLOu3AJ3GJiRV6nGX/7Zcx04VELhh8uA0A4OWO2AQuQWt7Yah36D59x4BrEQ==
 
-"@holdstation/worldchain-sdk@file:../../packages/sdk":
-  version "4.0.14"
+"@holdstation/worldchain-sdk@^4.0.25":
+  version "4.0.25"
+  resolved "https://registry.yarnpkg.com/@holdstation/worldchain-sdk/-/worldchain-sdk-4.0.25.tgz#f096b04d9390e6684be07c9083a0e7c92ae6238b"
+  integrity sha512-CK8wPWpWIBh12SO4yzlSDQZ8Hkxtaya/JObrdvhfhDDm6EyoxTG9zURK/Y3RbPqjTE8na6WZW/PP/ailBx0N8Q==
 
 "@noble/curves@1.2.0":
   version "1.2.0"

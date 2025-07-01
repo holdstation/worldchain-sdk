@@ -1,6 +1,7 @@
 import { Client, Multicall3, Quoter, UniswapV2, UniswapV3 } from "@holdstation/worldchain-ethers-v5";
 import {
   config,
+  HoldSo,
   inmemoryTokenStorage,
   SwapHelper,
   SwapParams,
@@ -28,6 +29,7 @@ const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 
 const quoter = new Quoter(client, { tokenProvider });
 
 const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
+const worldswap = new HoldSo(tokenProvider, inmemoryTokenStorage);
 const uniswapV3 = new UniswapV3({
   provider,
   quoter,
@@ -44,6 +46,7 @@ const uniswapV2 = new UniswapV2({
 swapHelper.load(uniswapV3);
 swapHelper.load(uniswapV2);
 swapHelper.load(zeroX);
+swapHelper.load(worldswap);
 
 // Token functions
 export async function getTokenDetail() {
@@ -114,7 +117,7 @@ export async function swap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["0x", "uniswap-v2", "uniswap-v3"],
+    preferRouters: ["hold-so", "0x", "uniswap-v2", "uniswap-v3"],
   };
 
   const quoteResponse = await swapHelper.estimate.quote(params);
@@ -127,6 +130,7 @@ export async function swap() {
       to: quoteResponse.to,
       value: quoteResponse.value,
     },
+    partnerCode: "0", // Replace with your partner code, contact to holdstation team to get one
     feeAmountOut: quoteResponse.addons?.feeAmountOut,
     fee: "0.2",
     feeReceiver: ethers.constants.AddressZero, // ZERO_ADDRESS or your fee receiver address
