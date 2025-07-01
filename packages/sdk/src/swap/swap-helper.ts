@@ -313,7 +313,7 @@ export class SwapHelper implements Swapper {
     return token;
   }
 
-  private packPartnerData(partnerCode: string, fee: string): BigNumber {
+  private packPartnerData(partnerCode: string, fee: string): string {
     // Convert to JavaScript BigInts for bitwise operation
     const partnerCodeBigInt = BigInt(partnerCode);
     const feeBigInt = BigInt(fee);
@@ -325,6 +325,6 @@ export class SwapHelper implements Swapper {
     const result = shiftedPartnerCode | feeBigInt;
 
     // Convert back to BigNumber
-    return new BigNumber(result.toString());
+    return new BigNumber(result).toFixed();
   }
 }
