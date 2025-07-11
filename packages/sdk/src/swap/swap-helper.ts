@@ -41,12 +41,13 @@ export class SwapHelper implements Swapper {
     const { timeout = 30_000, preferRouters = ["holds-so", "0x"] } = params;
     const chainId = this.client.getChainId();
 
-    const preferredRouters = preferRouters || Object.keys(this.modules);
-    if (preferredRouters.length === 0) {
+    // Use the default preferRouters from params, which is already set to ["holds-so", "0x"] if not provided
+    const routersToUse = preferRouters;
+    if (routersToUse.length === 0) {
       throw new Error("No router available");
     }
 
-    const validModules = preferredRouters
+    const validModules = routersToUse
       .map((router) => this.modules[router])
       .filter((swapper) => swapper && swapper.enabled(chainId));
 
