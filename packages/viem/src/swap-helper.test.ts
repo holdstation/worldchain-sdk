@@ -73,7 +73,6 @@ describe('SwapHelper - quote', () => {
       amountIn: '1',
       slippage: '0.3',
       fee: '0',
-      preferRouters: ['0x'],
     }
 
     const result = await swapHelper.estimate.quote(params)
@@ -87,7 +86,6 @@ describe('SwapHelper - quote', () => {
       amountIn: '1',
       slippage: '0.3',
       fee: '0',
-      preferRouters: ['0x'],
     }
 
     const result = await swapHelper.estimate.quote(params)
@@ -101,7 +99,6 @@ describe('SwapHelper - quote', () => {
       amountIn: '100',
       slippage: '0.3',
       fee: '0',
-      preferRouters: ['0x'],
     }
 
     const result = await swapHelper.estimate.quote(params)
@@ -115,7 +112,6 @@ describe('SwapHelper - quote', () => {
       amountIn: '2',
       slippage: '0.3',
       fee: '0.2',
-      preferRouters: ['0x'],
     }
 
     const result = await swapHelper.estimate.quote(params)

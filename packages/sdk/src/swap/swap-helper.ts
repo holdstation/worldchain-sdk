@@ -38,10 +38,10 @@ export class SwapHelper implements Swapper {
   }
 
   private async _quote(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
-    const { timeout = 30_000 } = params;
+    const { timeout = 30_000, preferRouters = ["holds-so", "0x"] } = params;
     const chainId = this.client.getChainId();
 
-    const preferredRouters = params.preferRouters || Object.keys(this.modules);
+    const preferredRouters = preferRouters || Object.keys(this.modules);
     if (preferredRouters.length === 0) {
       throw new Error("No router available");
     }

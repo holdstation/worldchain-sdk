@@ -79,7 +79,6 @@ describe("SwapHelper - quote", () => {
       amountIn: "1",
       slippage: "0.3",
       fee: "0",
-      preferRouters: ["0x"],
     };
 
     const result = await swapHelper.estimate.quote(params);
@@ -88,12 +87,11 @@ describe("SwapHelper - quote", () => {
 
   it("should return the correct estimated swap response ETH", async () => {
     const params: SwapParams["quoteInput"] = {
-      tokenIn: "0xb0505e5a99abd03d94a1169e638b78edfed26ea4",
-      tokenOut: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Native ETH
-      amountIn: "1",
+      tokenIn: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      tokenOut: "0x4200000000000000000000000000000000000006", // Native ETH
+      amountIn: "0.01",
       slippage: "0.3",
       fee: "0",
-      preferRouters: ["0x"],
     };
 
     const result = await swapHelper.estimate.quote(params);
@@ -107,7 +105,6 @@ describe("SwapHelper - quote", () => {
       amountIn: "100",
       slippage: "0.3",
       fee: "0",
-      preferRouters: ["uniswap-v3"],
     };
 
     const result = await swapHelper.estimate.quote(params);
@@ -121,7 +118,6 @@ describe("SwapHelper - quote", () => {
       amountIn: "2",
       slippage: "0.3",
       fee: "0.2",
-      preferRouters: ["uniswap-v2"],
     };
 
     const result = await swapHelper.estimate.quote(params);

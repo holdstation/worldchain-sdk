@@ -71,7 +71,6 @@ export async function estimateSwap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["hold-so", "0x"],
   };
 
   const result = await swapHelper.estimate.quote(params);
@@ -87,7 +86,6 @@ export async function swap() {
     amountIn: "2",
     slippage: "0.3",
     fee: "0.2",
-    preferRouters: ["0x"],
   };
 
   const quoteResponse = await swapHelper.estimate.quote(params);
