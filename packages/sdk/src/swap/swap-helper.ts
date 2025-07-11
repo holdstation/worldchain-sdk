@@ -38,7 +38,7 @@ export class SwapHelper implements Swapper {
   }
 
   private async _quote(params: SwapParams["quoteInput"]): Promise<SwapParams["quoteOutput"]> {
-    const { timeout = 30_000, preferRouters = ["holds-so", "0x"] } = params;
+    const { timeout = 30_000, preferRouters = ["hold-so", "0x"] } = params;
     const chainId = this.client.getChainId();
 
     // Use the default preferRouters from params, which is already set to ["holds-so", "0x"] if not provided
