@@ -11,6 +11,7 @@ export class SwapHelper implements Swapper {
   private modules: Record<string, SwapModule> = {};
   private readonly tokenProvider: TokenProvider;
   private tokenStorage: TokenStorage;
+  private defaultFee = "0.6";
   estimate: Estimator;
 
   // WORLDCHAIN
@@ -101,7 +102,7 @@ export class SwapHelper implements Swapper {
       tokenIn,
       tokenOut,
       amountIn,
-      fee = "0.2",
+      fee = this.defaultFee,
       feeReceiver = "0x0000000000000000000000000000000000000000",
       feeAmountOut,
       partnerCode,
@@ -181,7 +182,7 @@ export class SwapHelper implements Swapper {
       tokenIn,
       tokenOut,
       amountIn,
-      fee = "0.2",
+      fee = this.defaultFee,
       feeReceiver = "0x0000000000000000000000000000000000000000",
       partnerCode,
     } = params;
@@ -226,7 +227,7 @@ export class SwapHelper implements Swapper {
       tokenIn,
       tokenOut,
       amountIn,
-      fee = "0.2",
+      fee = this.defaultFee,
       feeReceiver = "0x0000000000000000000000000000000000000000",
       partnerCode,
     } = params;
