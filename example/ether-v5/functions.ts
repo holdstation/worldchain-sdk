@@ -69,6 +69,20 @@ export async function getTokenInfo() {
   return tokenInfo;
 }
 
+export async function getTokenBalance() {
+  console.log("Fetching token balance...");
+  const walletAddress = "0x53531b1872B141D56B4D82A54B61D23911be04c1";
+  const topicWallet = ethers.utils.hexZeroPad(walletAddress, 32);
+  const tokens = await tokenProvider.tokenOf(topicWallet);
+  const balances = await tokenProvider.balanceOf({
+    wallet: walletAddress,
+    tokens,
+  });
+
+  console.log("Token Balances:", balances);
+  return balances;
+}
+
 // Quote functions
 export async function getSimpleQuote() {
   console.log("Fetching simple quote...");

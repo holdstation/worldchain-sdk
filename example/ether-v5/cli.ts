@@ -1,5 +1,13 @@
 import inquirer from "inquirer";
-import { estimateSwap, getSimpleQuote, getSmartQuote, getTokenDetail, getTokenInfo, swap } from "./functions.js";
+import {
+  estimateSwap,
+  getSimpleQuote,
+  getSmartQuote,
+  getTokenBalance,
+  getTokenDetail,
+  getTokenInfo,
+  swap,
+} from "./functions.js";
 
 async function main() {
   const { action } = await inquirer.prompt([
@@ -10,6 +18,7 @@ async function main() {
       choices: [
         { name: "Get Token Details", value: "tokenDetail" },
         { name: "Get Token Info", value: "tokenInfo" },
+        { name: "Get Token Balance", value: "tokenBalance" },
         { name: "Get Simple Quote", value: "simpleQuote" },
         { name: "Get Smart Quote", value: "smartQuote" },
         { name: "Estimate Swap", value: "estimateSwap" },
@@ -31,6 +40,9 @@ async function main() {
         break;
       case "tokenInfo":
         await getTokenInfo();
+        break;
+      case "tokenBalance":
+        await getTokenBalance();
         break;
       case "simpleQuote":
         await getSimpleQuote();
