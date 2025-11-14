@@ -31,3 +31,41 @@ index 164acf2..52d26b9 100644
      const compressed = brotli_1.default.compress(Buffer.from(data.replace('0x', ''), 'hex'), {
          mode: 0,
          quality: 1,
+diff --git a/node_modules/@uniswap/smart-order-router/build/module/util/gas-factory-helpers.js b/node_modules/@uniswap/smart-order-router/build/module/util/gas-factory-helpers.js
+index d9c3564..6338d58 100644
+--- a/node_modules/@uniswap/smart-order-router/build/module/util/gas-factory-helpers.js
++++ b/node_modules/@uniswap/smart-order-router/build/module/util/gas-factory-helpers.js
+@@ -3,7 +3,19 @@ import { BigNumber } from '@ethersproject/bignumber';
+ import { Protocol } from '@uniswap/router-sdk';
+ import { ChainId, Percent, Token, TradeType } from '@uniswap/sdk-core';
+ import { UniversalRouterVersion } from '@uniswap/universal-router-sdk';
+-import brotli from 'brotli';
++// Make brotli optional for browser compatibility
++let brotli = null;
++// Use dynamic import wrapped in a function to avoid top-level await
++const loadBrotli = async () => {
++    try {
++        const module = await import('brotli');
++        brotli = module.default || module;
++    } catch (e) {
++        // brotli not available in browser
++    }
++};
++// Start loading but don't block
++loadBrotli().catch(() => {});
+ import JSBI from 'jsbi';
+ import _ from 'lodash';
+ import { getQuoteThroughNativePool, metric, MetricLoggerUnit, MixedRouteWithValidQuote, SwapType, usdGasTokensByChain, V2RouteWithValidQuote, V3RouteWithValidQuote, V4RouteWithValidQuote, } from '../routers';
+@@ -98,6 +110,12 @@ export function getGasCostInNativeCurrency(nativeCurrency, gasCostInWei) {
+ export function getArbitrumBytes(data) {
+     if (data == '')
+         return BigNumber.from(0);
++    // If brotli is not available (browser), estimate based on data length
++    if (!brotli) {
++        // Rough estimate: 30% compression ratio
++        const dataBytes = Buffer.from(data.replace('0x', ''), 'hex').length;
++        return BigNumber.from(Math.ceil(dataBytes * 0.3));
++    }
+     const compressed = brotli.compress(Buffer.from(data.replace('0x', ''), 'hex'), {
+         mode: 0,
+         quality: 1,
