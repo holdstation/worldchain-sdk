@@ -1,0 +1,33 @@
+diff --git a/node_modules/@uniswap/smart-order-router/build/main/util/gas-factory-helpers.js b/node_modules/@uniswap/smart-order-router/build/main/util/gas-factory-helpers.js
+index 164acf2..52d26b9 100644
+--- a/node_modules/@uniswap/smart-order-router/build/main/util/gas-factory-helpers.js
++++ b/node_modules/@uniswap/smart-order-router/build/main/util/gas-factory-helpers.js
+@@ -9,7 +9,14 @@ const bignumber_1 = require("@ethersproject/bignumber");
+ const router_sdk_1 = require("@uniswap/router-sdk");
+ const sdk_core_1 = require("@uniswap/sdk-core");
+ const universal_router_sdk_1 = require("@uniswap/universal-router-sdk");
+-const brotli_1 = __importDefault(require("brotli"));
++// Make brotli optional for browser compatibility
++let brotli_1;
++try {
++    brotli_1 = __importDefault(require("brotli"));
++} catch (e) {
++    // brotli not available in browser environment
++    brotli_1 = null;
++}
+ const jsbi_1 = __importDefault(require("jsbi"));
+ const lodash_1 = __importDefault(require("lodash"));
+ const routers_1 = require("../routers");
+@@ -108,6 +115,12 @@ exports.getGasCostInNativeCurrency = getGasCostInNativeCurrency;
+ function getArbitrumBytes(data) {
+     if (data == '')
+         return bignumber_1.BigNumber.from(0);
++    // If brotli is not available (browser), estimate based on data length
++    if (!brotli_1 || !brotli_1.default) {
++        // Rough estimate: 30% compression ratio
++        const dataBytes = Buffer.from(data.replace('0x', ''), 'hex').length;
++        return bignumber_1.BigNumber.from(Math.ceil(dataBytes * 0.3));
++    }
+     const compressed = brotli_1.default.compress(Buffer.from(data.replace('0x', ''), 'hex'), {
+         mode: 0,
+         quality: 1,
