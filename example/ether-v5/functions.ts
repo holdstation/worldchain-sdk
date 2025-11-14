@@ -1,4 +1,4 @@
-import { Client, Multicall3, Quoter, UniswapV2, UniswapV3 } from "@holdstation/worldchain-ethers-v5";
+import { Client, Multicall3 } from "@holdstation/worldchain-ethers-v5";
 import {
   config,
   HoldSo,
@@ -26,25 +26,9 @@ const swapHelper = new SwapHelper(client, {
 });
 
 const tokenProvider = new TokenProvider({ client, multicall3: config.multicall3 });
-const quoter = new Quoter(client, { tokenProvider });
 
 const zeroX = new ZeroX(tokenProvider, inmemoryTokenStorage);
 const worldswap = new HoldSo(tokenProvider, inmemoryTokenStorage);
-const uniswapV3 = new UniswapV3({
-  provider,
-  quoter,
-  tokenProvider,
-  tokenStorage: inmemoryTokenStorage,
-});
-const uniswapV2 = new UniswapV2({
-  provider,
-  quoter,
-  tokenProvider,
-  tokenStorage: inmemoryTokenStorage,
-});
-
-swapHelper.load(uniswapV3);
-swapHelper.load(uniswapV2);
 swapHelper.load(zeroX);
 swapHelper.load(worldswap);
 
@@ -81,29 +65,6 @@ export async function getTokenBalance() {
 
   console.log("Token Balances:", balances);
   return balances;
-}
-
-// Quote functions
-export async function getSimpleQuote() {
-  console.log("Fetching simple quote...");
-  const WETH = "0x4200000000000000000000000000000000000006";
-  const USDCe = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
-  const quote = await quoter.simple(WETH, USDCe);
-
-  console.log("Quote:", quote.best);
-  return quote;
-}
-
-export async function getSmartQuote() {
-  console.log("Fetching smart quote...");
-  const WETH = "0x4200000000000000000000000000000000000006";
-  const quote = await quoter.smart(WETH, {
-    slippage: 3,
-    deadline: 10,
-  });
-
-  console.log("Quote:", quote.quote);
-  return quote;
 }
 
 // Swap functions

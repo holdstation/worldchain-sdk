@@ -18,8 +18,8 @@
     "tsx": "^4.19.4"
   },
   "dependencies": {
-    "@holdstation/worldchain-sdk": "^4.0.25",
-    "@holdstation/worldchain-viem": "^4.0.25",
+    "@holdstation/worldchain-sdk": "file:../../packages/sdk",
+    "@holdstation/worldchain-viem": "file:../../packages/viem",
     "inquirer": "^8.2.5",
     "viem": "^2.29.2"
   }

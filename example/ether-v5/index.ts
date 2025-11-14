@@ -40,5 +40,3 @@ async function getTokenInfo() {
 getTokenInfo()
   .then(() => console.log("Token info fetched successfully."))
   .catch((error) => console.error("Error fetching token info:", error));
-
-// Quoter example
